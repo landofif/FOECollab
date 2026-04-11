@@ -264,10 +264,13 @@ public class InventoryScreenHandler {
                             Text.literal("Personal Vault\n").formatted(Formatting.BOLD, Formatting.WHITE),
                             Text.literal("Opens your personal vault.").formatted(Formatting.GRAY, Formatting.ITALIC)
                     )), minecraftClient));
-            clickableWidgets.add(assembleButton( buttonSize * 1, buttonSize, Text.literal("❌").formatted(Formatting.RED, Formatting.BOLD), "trash", Tooltip.of(
+            clickableWidgets.add(assembleButton( buttonSize * 1, buttonSize, Text.literal("\uF039"), "turbotravel", Tooltip.of(
                     TextHelper.concat(
-                            Text.literal("Trash\n").formatted(Formatting.BOLD, Formatting.WHITE),
-                            Text.literal("Opens the trash bin.").formatted(Formatting.GRAY, Formatting.ITALIC)
+                            Text.literal("Turbo Travel\n").formatted(Formatting.BOLD, Formatting.WHITE),
+                            Text.literal("Opens the Travel Menu.\n").formatted(Formatting.GRAY, Formatting.ITALIC),
+                            Text.literal("\n"),
+                            Text.literal("Requires atleast ").formatted(Formatting.WHITE, Formatting.ITALIC),
+                            Text.literal(Constant.CAPTAIN.TAG.getString()).formatted(Formatting.WHITE)
                     )), minecraftClient));
             clickableWidgets.add(assembleButton( buttonSize * 2, buttonSize, Text.literal("⛏").formatted(Formatting.GOLD, Formatting.BOLD), "craft", Tooltip.of(
                     TextHelper.concat(
