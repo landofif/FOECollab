@@ -1,0 +1,29 @@
+{
+  "required": true,
+  "package": "io.github.foecollab.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "mixins": [
+    "ClientGlowMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  },
+  "client": [
+    "ArmorFeatureRendererMixin",
+    "BossBarHudAccessor",
+    "BossBarHudMixin",
+    "ChatScreenAccessor",
+    "ChatScreenMixin",
+    "EntityMixin",
+    "HandledScreenAccessor",
+    "HandledScreenMixin",
+    "InGameHudAccessor",
+    "InGameHudMixin",
+    "KeyBindingAccessor",
+    "PlayerListHudAccessor",
+    "PlayerListHudMixin",
+    "RecipeBookScreenAccessor",
+    "TextFieldWidgetMixin",
+    "ReconfiguringMixin"
+  ]
+}
