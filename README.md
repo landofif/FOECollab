@@ -1,49 +1,72 @@
-# FishonMC-Extras
+# FishonMC Extras Collab
 
-[![Minecraft Version](https://img.shields.io/badge/Minecraft-1.21.4%20to%201.21.5-blue)](https://minecraft.net)
+[![Minecraft Version](https://img.shields.io/badge/Minecraft-1.21.11-blue)](https://minecraft.net)
 [![License: AGPL-3.0-only](https://img.shields.io/badge/License-AGPL--3.0--only-green)](https://opensource.org/licenses/AGPL-3.0)
 [![Mod Loader](https://img.shields.io/badge/Mod%20Loader-Fabric-orange)](https://fabricmc.net)
 
-A Minecraft mod that enhances your experience on FishOnMC with advanced tracking, HUD displays, and statistics.  
-**Supports Minecraft 1.21.4 and 1.21.5**.
+A community driven continuation of the original **FishonMC-Extras** mod.
+
+This project exists to preserve the core functionality of the original mod while giving compatibility with newer Minecraft versions.
+
+> !! This is an unofficial continuation and is not affiliated with the original author MarkassK. !!
 
 ---
 
-## 📋 Features
-- Real-time fishing statistics tracking
-- Customizable HUD with:
-    - Fish caught counter
-    - XP/value earned tracking
-    - Rarity/size distribution charts
-- Auto-pause timer after inactivity
-- Active pet / No pet Warning
-- "/foe" chat command
-- Pet stat percentages
-- Pet Merge calculator
-- Item Frame tooltip shower
-- Warning when inventory gets nearly full
+## Features
 
-## ⚙️ Installation
-1. **Install Fabric Loader** for your Minecraft version
-2. Download dependencies:
-    - [Fabric API](https://modrinth.com/mod/fabric-api)
-    - [Cloth Config](https://modrinth.com/mod/cloth-config)
-    - [ModMenu](https://modrinth.com/mod/modmenu)
-3. Place `fishonmc-extras-0.x.x+1.21.4-1.21.5.jar` in your `mods` folder
+* Real-time fishing statistics tracking
+* Customizable HUD with:
 
-### Mod Managers
-- **Modrinth App**: [![Modrinth](https://cdn.modrinth.com/img/modrinth-badge.png)](https://modrinth.com/mod/fishonmc-extras)
+  * Fish caught counter
+  * XP / value tracking
+  * Rarity and size distribution insights
+* Auto-pause timer after inactivity
+* Pet status warnings (active / missing)
+* `/foe` chat command
+* Pet stat percentage display
+* Pet merge calculator
+* Item frame tooltip display
+* Inventory space warning
+* And much more!
 
-## 🛠️ Configuration
-Access config screen via:
-1. Mod Menu (`Esc` → `Mods` → `FishonMC-Extras`)
-2. `O` Default Key
+---
 
+## Installation
+
+1. Install **Fabric Loader** for your Minecraft version
+2. Install required dependencies:
+
+   * Fabric API
+   * Cloth Config
+   * Mod Menu
+3. Place the mod `.jar` file into your `mods` folder
+
+---
+
+## Configuration
+
+Access the configuration menu via:
+
+* Mod Menu (`Esc` → `Mods` → FishonMC Extras)
+* Default keybind: `O`
+
+---
+
+## Contributing
+
+This is a collaborative project. Contributions, bug reports, and suggestions are welcome.
+
+---
 
 ## License
-This project is licensed under the **GNU Affero General Public License v3.0 (AGPL-3.0-only)**.  
-See [LICENSE](LICENSE) for full terms.
 
-**Disclaimer:** Not affilliated with Mojang, Microsoft or the FishOnMC Server. This is a player made mod.
+This project is licensed under the **GNU Affero General Public License v3.0 (AGPL-3.0-only)**.
+See the LICENSE file for full terms.
 
-MarkassK
+---
+
+## Disclaimer
+
+* This project is not affiliated with Mojang, Microsoft, or the FishOnMC server
+* All credit for the original concept goes to the original author
+* This is a fan-made continuation

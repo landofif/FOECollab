@@ -1,0 +1,34 @@
+package io.github.foecollab.handler;
+
+import io.github.foecollab.config.FOEConfig;
+import net.minecraft.client.MinecraftClient;
+
+public class FullInventoryHandler {
+    private static FullInventoryHandler INSTANCE = new FullInventoryHandler();
+    private final FOEConfig config = FOEConfig.getConfig();
+
+    public boolean isOverThreshold = false;
+    public int slotsLeft = 0;
+
+    public static FullInventoryHandler instance() {
+        if (INSTANCE == null) {
+            INSTANCE = new FullInventoryHandler();
+        }
+        return INSTANCE;
+    }
+
+    public void tick(MinecraftClient minecraftClient) {
+        int emptySlots = 0;
+        if(minecraftClient.player != null) {
+            for (int i = 0; i < 36; i++) { //  0-8 are hotbar slots / 9-35 are main inventory slots
+                if (minecraftClient.player.getInventory().getStack(i).isEmpty()) {
+                    emptySlots++;
+                }
+            }
+
+            isOverThreshold = emptySlots <= config.fullInventoryTracker.fullInventoryWarningThreshold;
+
+            slotsLeft = emptySlots;
+        }
+    }
+}
