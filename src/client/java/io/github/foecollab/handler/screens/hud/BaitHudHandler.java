@@ -11,8 +11,6 @@ import net.minecraft.component.type.CustomModelDataComponent;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
 
-import java.util.List;
-
 public class BaitHudHandler {
     private static BaitHudHandler INSTANCE = new BaitHudHandler();
 
@@ -72,15 +70,11 @@ public class BaitHudHandler {
                 : CustomModelDataComponent.DEFAULT;
     }
 
-    /// The bait/lure to show in the HUD. The server now stores the equipped item in the
-    /// rod's {@code activeBait} list; fall back to the first tacklebox entry for older
-    /// data that didn't send it. Returns null when there's no rod/bait.
+    /// The bait/lure to show in the HUD. The server stores the equipped item in the rod's
+    /// {@code activeBait} list (with a tacklebox fallback for older data); see
+    /// {@link io.github.foecollab.FOMC.Types.FishingRod#getActiveBaitItem()}.
     private FOMCItem getActiveBait() {
         var fishingRod = FishingRodHandler.instance().fishingRod;
-        if (fishingRod == null) {
-            return null;
-        }
-        List<FOMCItem> activeList = !fishingRod.activeBait.isEmpty() ? fishingRod.activeBait : fishingRod.tacklebox;
-        return activeList.isEmpty() ? null : activeList.getFirst();
+        return fishingRod == null ? null : fishingRod.getActiveBaitItem();
     }
 }

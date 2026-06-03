@@ -3,6 +3,7 @@ package io.github.foecollab.handler;
 import io.github.foecollab.FOMC.Constant;
 import io.github.foecollab.FOMC.LocationInfo;
 import io.github.foecollab.FOMC.Types.Bait;
+import io.github.foecollab.FOMC.Types.FOMCItem;
 import io.github.foecollab.FOMC.Types.FishingRod;
 import io.github.foecollab.FOMC.Types.Lure;
 import io.github.foecollab.config.FOEConfig;
@@ -211,7 +212,8 @@ public class FishingRodHandler {
             }
             if (rod == null) return;
             
-            if(config.bobberTracker.showBait && !rod.tacklebox.isEmpty() && !this.isTackleboxDisabled(minecraftClient) && !baitDisplay.containsKey(entity.getId())) {
+            FOMCItem activeBait = rod.getActiveBaitItem();
+            if(config.bobberTracker.showBait && activeBait != null && !this.isTackleboxDisabled(minecraftClient) && !baitDisplay.containsKey(entity.getId())) {
                 if (minecraftClient.world == null || minecraftClient.player == null) return;
                 DisplayEntity.ItemDisplayEntity itemDisplayEntity = Objects.requireNonNull(EntityType.ITEM_DISPLAY.create(minecraftClient.world, SpawnReason.TRIGGERED));
                 minecraftClient.world.addEntity(itemDisplayEntity);
@@ -219,8 +221,8 @@ public class FishingRodHandler {
                 baitDisplay.put(entity.getId(), itemDisplayEntity.getId());
 
                 ItemStack baitStack = Items.COOKED_COD.getDefaultStack().copy();
-                baitStack.set(DataComponentTypes.CUSTOM_MODEL_DATA, rod.tacklebox.getFirst() instanceof Bait bait ?
-                        bait.customModelData : rod.tacklebox.getFirst() instanceof Lure lure ? lure.customModelData : CustomModelDataComponent.DEFAULT);
+                baitStack.set(DataComponentTypes.CUSTOM_MODEL_DATA, activeBait instanceof Bait bait ?
+                        bait.customModelData : activeBait instanceof Lure lure ? lure.customModelData : CustomModelDataComponent.DEFAULT);
 
                 itemDisplayEntity.setItemStack(baitStack);
                 itemDisplayEntity.setPosition(entity.getEntityPos().add(0, -0.32, 0));

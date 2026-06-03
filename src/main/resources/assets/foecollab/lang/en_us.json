@@ -390,9 +390,6 @@
   "text.autoconfig.foecollab.option.muteAdvancementSound": "Mute advancement sound",
   "text.autoconfig.foecollab.option.muteAdvancementSound.@Tooltip": "§7Silences the §fadvancement / challenge complete§7 sound that plays on every fish catch.",
 
-  "text.autoconfig.foecollab.option.hoverOverPlayerStats": "§f§lHover over Player Options",
-  "text.autoconfig.foecollab.option.hoverOverPlayerStats.showPlayerEquipment": "Show equipment on players when sneaking",
-
   "text.autoconfig.foecollab.option.petFollower": "§f§lPet Follower Options",
   "text.autoconfig.foecollab.option.petFollower.ownPet": "Toggle between visibility options for own pet",
   "text.autoconfig.foecollab.option.petFollower.otherPets": "Toggle between visibility options for all other pets",

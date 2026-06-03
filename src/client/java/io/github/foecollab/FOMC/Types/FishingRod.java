@@ -69,6 +69,14 @@ public class FishingRod extends FOMCItem {
         } else this.reel = null;
     }
 
+    /// The bait/lure currently in use: the first {@code activeBait} entry, falling back to the
+    /// first {@code tacklebox} entry for older data that didn't send the activeBait list. Returns
+    /// null when the rod carries no bait.
+    public FOMCItem getActiveBaitItem() {
+        List<FOMCItem> activeList = !activeBait.isEmpty() ? activeBait : tacklebox;
+        return activeList.isEmpty() ? null : activeList.getFirst();
+    }
+
     /// Parses an NBT list of serialized bait/lure item stacks (e.g. {@code tacklebox} or
     /// {@code activeBait}) into the corresponding {@link Lure}/{@link Bait} models.
     private static List<FOMCItem> parseBaitList(NbtCompound nbtCompound, String key) {

@@ -128,10 +128,6 @@ public class FOEConfig implements ConfigData {
 
     @ConfigEntry.Category(value = OTHER)
     @ConfigEntry.Gui.CollapsibleObject
-    public HoverOverPlayerStatsConfig.HoverOverPlayerStats hoverOverPlayerStats = new HoverOverPlayerStatsConfig.HoverOverPlayerStats();
-
-    @ConfigEntry.Category(value = OTHER)
-    @ConfigEntry.Gui.CollapsibleObject
     public PetFollowerConfig.PetFollower petFollower = new PetFollowerConfig.PetFollower();
 
     @ConfigEntry.Category(value = OTHER)
