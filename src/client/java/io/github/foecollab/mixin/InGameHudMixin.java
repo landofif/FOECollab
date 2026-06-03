@@ -1,0 +1,122 @@
+package io.github.foecollab.mixin;
+
+import io.github.foecollab.config.FOEConfig;
+import io.github.foecollab.handler.FishCatchHandler;
+import io.github.foecollab.handler.ItemMarkerHandler;
+import io.github.foecollab.handler.LoadingHandler;
+import io.github.foecollab.handler.OwnPlayerHandler;
+import net.minecraft.client.font.TextRenderer;
+import net.minecraft.client.gui.DrawContext;
+import net.minecraft.client.gui.hud.InGameHud;
+import net.minecraft.client.gui.hud.bar.Bar;
+import net.minecraft.client.render.RenderTickCounter;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.item.ItemStack;
+import net.minecraft.text.Text;
+import org.jetbrains.annotations.Nullable;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.Unique;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.Redirect;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+
+import java.util.Objects;
+
+@Mixin(InGameHud.class)
+public class InGameHudMixin {
+    @Shadow private @Nullable Text title;
+    @Shadow private int titleRemainTicks;
+    @Unique
+    private final FOEConfig config = FOEConfig.getConfig();
+
+    @Inject(method = "renderScoreboardSidebar(Lnet/minecraft/client/gui/DrawContext;Lnet/minecraft/client/render/RenderTickCounter;)V", at = @At("HEAD"), cancellable = true)
+    private void injectRenderScoreboardSidebar(DrawContext context, RenderTickCounter tickCounter, CallbackInfo ci) {
+        if(config.scoreboardTracker.hideScoreboard && LoadingHandler.instance().isOnServer) {
+            ci.cancel();
+        }
+    }
+
+    @Inject(method = "renderTitleAndSubtitle", at = @At("HEAD"), cancellable = true)
+    private void injectRenderTitleAndSubtitle(DrawContext context, RenderTickCounter tickCounter, CallbackInfo ci) {
+        if((LoadingHandler.instance().isOnServer
+                && System.currentTimeMillis() - FishCatchHandler.instance().lastTimeUsedRod < 1000L
+                && config.titlePopup.useNewTitleSystem)
+                || config.fun.immersionMode
+                || (
+                        config.titlePopup.useNewTitleSystem
+                                && config.fishTracker.fishTrackerToggles.otherToggles.useNewTitle
+                                && this.title != null
+                                && !this.title.getString().isEmpty()
+                                && this.titleRemainTicks > 0
+                                && (int) this.title.getString().charAt(0) > 0xE000
+                                && (int) this.title.getString().charAt(0) < 0xE999
+                   )
+                || (
+                        config.fun.biteBobber
+                                && this.title != null
+                                && !this.title.getString().isEmpty()
+                                && this.titleRemainTicks > 0
+                                && Objects.equals(this.title.getString(), "BITE!")
+                )
+        ) {
+            ci.cancel();
+        }
+    }
+
+    // 1.21.11: InGameHud no longer has renderExperienceBar/renderExperienceLevel.
+    // The bar graphic moved to ExperienceBar#renderBar (see ExperienceBarMixin) and the
+    // level number is drawn by the static Bar#drawExperienceLevel call inside renderMainHud.
+    @Redirect(method = "renderMainHud", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/hud/bar/Bar;drawExperienceLevel(Lnet/minecraft/client/gui/DrawContext;Lnet/minecraft/client/font/TextRenderer;I)V"))
+    private void redirectExperienceLevel(DrawContext context, TextRenderer textRenderer, int level) {
+        if(config.barHUD.showBar && LoadingHandler.instance().isOnServer) {
+            return;
+        }
+        Bar.drawExperienceLevel(context, textRenderer, level);
+    }
+
+    @Inject(method = "setTitle", at = @At("HEAD"))
+    private void injectSetTitle(Text title, CallbackInfo ci) {
+        if(LoadingHandler.instance().isOnServer) {
+            FishCatchHandler.instance().catchTitle(title);
+        }
+    }
+
+    @Inject(method = "setSubtitle", at = @At("HEAD"))
+    private void injectSetSubtitle(Text title, CallbackInfo ci) {
+        if(LoadingHandler.instance().isOnServer) {
+            FishCatchHandler.instance().catchSubtitle(title);
+        }
+    }
+
+    @Inject(method = "renderOverlayMessage", at = @At("HEAD"), cancellable = true)
+    private void injectRenderOverlayMessage(DrawContext context, RenderTickCounter tickCounter, CallbackInfo ci) {
+        if(LoadingHandler.instance().isOnServer && config.fun.minigameOnBobber) {
+            ci.cancel();
+        }
+    }
+
+    @Inject(method = "renderMainHud", at = @At("HEAD"), cancellable = true)
+    private void injectRenderMainHud(DrawContext context, RenderTickCounter tickCounter, CallbackInfo ci) {
+        if(LoadingHandler.instance().isOnServer && config.fun.immersionMode && System.currentTimeMillis() - OwnPlayerHandler.instance().changedSlotTime > 5000L) {
+            ci.cancel();
+        }
+    }
+
+    @Inject(method = "renderCrosshair", at = @At("HEAD"), cancellable = true)
+    private void injectRenderCrosshair(DrawContext context, RenderTickCounter tickCounter, CallbackInfo ci) {
+        if(LoadingHandler.instance().isOnServer && config.fun.immersionMode) {
+            ci.cancel();
+        }
+    }
+
+    // HEAD, not TAIL: the equipped-pet highlight must draw behind the hotbar item
+    // (it used z=100 before 1.21.11 dropped the matrix z axis).
+    @Inject(method = "renderHotbarItem", at = @At("HEAD"))
+    private void injectDrawHotbarItem(DrawContext context, int x, int y, RenderTickCounter tickCounter, PlayerEntity player, ItemStack stack, int seed, CallbackInfo ci) {
+        if(LoadingHandler.instance().isOnServer && LoadingHandler.instance().isLoadingDone) {
+            ItemMarkerHandler.instance().renderHotBarSelectedPet(context, x, y, stack);
+        }
+    }
+}

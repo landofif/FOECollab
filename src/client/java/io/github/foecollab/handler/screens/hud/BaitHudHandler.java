@@ -1,0 +1,86 @@
+package io.github.foecollab.handler.screens.hud;
+
+import io.github.foecollab.FOMC.Types.Bait;
+import io.github.foecollab.FOMC.Types.FOMCItem;
+import io.github.foecollab.FOMC.Types.Lure;
+import io.github.foecollab.config.FOEConfig;
+import io.github.foecollab.handler.FishingRodHandler;
+import io.github.foecollab.util.TextHelper;
+import net.minecraft.client.MinecraftClient;
+import net.minecraft.component.type.CustomModelDataComponent;
+import net.minecraft.text.Text;
+import net.minecraft.util.Formatting;
+
+import java.util.List;
+
+public class BaitHudHandler {
+    private static BaitHudHandler INSTANCE = new BaitHudHandler();
+
+    public static BaitHudHandler instance() {
+        if (INSTANCE == null) {
+            INSTANCE = new BaitHudHandler();
+        }
+        return INSTANCE;
+    }
+
+    public Text assembleBaitText() {
+        if (FishingRodHandler.instance().isTackleboxDisabled(MinecraftClient.getInstance())) {
+            return Text.literal("");
+        }
+
+        FOMCItem active = getActiveBait();
+        if (active == null) {
+            return Text.literal("");
+        }
+
+        var fishingRod = FishingRodHandler.instance().fishingRod;
+        if (active instanceof Lure firstLure && FOEConfig.getConfig().baitTracker.calculateLures) {
+            int lureQty = firstLure.calculateLures(fishingRod.tacklebox);
+
+            if (lureQty > 0) {
+                return TextHelper.concat(
+                        Text.literal(TextHelper.upperCaseAllFirstCharacter(firstLure.name)).formatted(Formatting.WHITE),
+                        Text.literal(": ").formatted(Formatting.GRAY),
+                        Text.literal(String.valueOf(lureQty)).formatted(Formatting.WHITE),
+                        Text.literal("x").formatted(Formatting.GRAY));
+            }
+        }
+
+        return TextHelper.concat(
+                active instanceof Bait bait
+                        ? Text.literal(TextHelper.upperCaseAllFirstCharacter(bait.name)).formatted(Formatting.WHITE)
+                        : active instanceof Lure lure
+                                ? Text.literal(TextHelper.upperCaseAllFirstCharacter(lure.name)).formatted(Formatting.WHITE)
+                                : Text.empty(),
+                Text.literal(": ").formatted(Formatting.GRAY),
+                active instanceof Bait bait
+                        ? Text.literal(String.valueOf(bait.counter)).formatted(Formatting.WHITE)
+                        : active instanceof Lure lure
+                                ? Text.literal(String.valueOf(lure.counter)).formatted(Formatting.WHITE)
+                                : Text.empty(),
+                Text.literal("x").formatted(Formatting.GRAY));
+    }
+
+    public CustomModelDataComponent getModelData() {
+        if (FishingRodHandler.instance().isTackleboxDisabled(MinecraftClient.getInstance())) {
+            return CustomModelDataComponent.DEFAULT;
+        }
+
+        FOMCItem active = getActiveBait();
+        return active instanceof Bait bait ? bait.customModelData
+                : active instanceof Lure lure ? lure.customModelData
+                : CustomModelDataComponent.DEFAULT;
+    }
+
+    /// The bait/lure to show in the HUD. The server now stores the equipped item in the
+    /// rod's {@code activeBait} list; fall back to the first tacklebox entry for older
+    /// data that didn't send it. Returns null when there's no rod/bait.
+    private FOMCItem getActiveBait() {
+        var fishingRod = FishingRodHandler.instance().fishingRod;
+        if (fishingRod == null) {
+            return null;
+        }
+        List<FOMCItem> activeList = !fishingRod.activeBait.isEmpty() ? fishingRod.activeBait : fishingRod.tacklebox;
+        return activeList.isEmpty() ? null : activeList.getFirst();
+    }
+}

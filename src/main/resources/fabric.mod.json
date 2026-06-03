@@ -18,7 +18,7 @@
 			"io.github.foecollab.FOECollab"
 		],
 		"client":[
-			"io.github.foecollab.FOECollabClient"
+			"io.github.foecollab.FishOnMCExtrasClient"
 		],
 		"modmenu": [
 			"io.github.foecollab.compat.ModMenuIntegration"

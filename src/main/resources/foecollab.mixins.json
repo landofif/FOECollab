@@ -14,16 +14,20 @@
     "BossBarHudMixin",
     "ChatScreenAccessor",
     "ChatScreenMixin",
+    "DrawContextMixin",
     "EntityMixin",
+    "ExperienceBarMixin",
     "HandledScreenAccessor",
     "HandledScreenMixin",
     "InGameHudAccessor",
     "InGameHudMixin",
     "KeyBindingAccessor",
+    "NbtComponentAccessor",
     "PlayerListHudAccessor",
     "PlayerListHudMixin",
     "RecipeBookScreenAccessor",
-    "TextFieldWidgetMixin",
-    "ReconfiguringMixin"
+    "ReconfiguringMixin",
+    "SoundManagerMixin",
+    "TextFieldWidgetMixin"
   ]
 }
