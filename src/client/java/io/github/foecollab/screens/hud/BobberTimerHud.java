@@ -17,6 +17,12 @@ public class BobberTimerHud {
             return;
         }
 
+        // Disappear the instant the fish is hooked / the bobber is reeled in, without waiting for
+        // the next tick to clear showTimerHud (render runs many times between ticks).
+        if (client.player == null || client.player.fishHook == null) {
+            return;
+        }
+
         FOEConfig config = FOEConfig.getConfig();
         TextRenderer textRenderer = client.textRenderer;
         Text text = Text.literal(String.format("%.1fs", FishingRodHandler.instance().timerSeconds));

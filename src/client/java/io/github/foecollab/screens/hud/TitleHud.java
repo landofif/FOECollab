@@ -17,28 +17,18 @@ public class TitleHud {
         TextRenderer textRenderer = client.textRenderer;
 
         long showedAt = TitleHandler.instance().showedAt;
-        float alpha = 0.0f;
+        long elapsed = System.currentTimeMillis() - showedAt;
 
-        if(System.currentTimeMillis() - showedAt < 1000L) {
-            long timeLeft = System.currentTimeMillis() - showedAt;
-            alpha = timeLeft / 1000f;
-        } else if (System.currentTimeMillis() - showedAt < TitleHandler.instance().time) {
-            alpha = 1.0f;
-        } else if (System.currentTimeMillis() - showedAt < 1000L + TitleHandler.instance().time) {
-            long timeLeft = System.currentTimeMillis() - showedAt - TitleHandler.instance().time;
-            alpha = 1.0f - timeLeft / 1000f;
-        }
-
-        if(System.currentTimeMillis() - showedAt < 3000L) {
+        if(elapsed < 3000L) {
             client.inGameHud.setTitle(Text.empty());
             client.inGameHud.setSubtitle(Text.empty());
         }
 
-        // Alpha
-        int alphaInt = (int) (alpha * 255f) << 24;
+        // No fade: full opacity for the whole duration, then gone instantly.
+        int alphaInt = 0xFF000000;
 
 
-        if(System.currentTimeMillis() - showedAt < 950L + TitleHandler.instance().time && System.currentTimeMillis() - showedAt > 50L) {
+        if(elapsed >= 0L && elapsed < TitleHandler.instance().time) {
             // Assemble all text lines
             List<Text> title = TitleHandler.instance().title;
             List<Text> subtitle = TitleHandler.instance().subtitle;

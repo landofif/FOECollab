@@ -3,16 +3,18 @@ package io.github.foecollab.screens.hud;
 import io.github.foecollab.config.FOEConfig;
 import io.github.foecollab.config.HudAlignment;
 import io.github.foecollab.handler.BiteTitleHandler;
+import io.github.foecollab.handler.FishCatchHandler;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.text.Text;
 
-/// Renders the user-configurable "bite" title (custom text + color + position), faded in and out
-/// independently of the caught-fish popup drawn by {@link TitleHud}.
+/// Renders the user-configurable "bite" title (custom text + color + position). It shows the
+/// instant a fish bites and disappears the instant the fish is hooked (the rod is reeled in) —
+/// no fade either way — falling back to a short timeout if the bite is never acted on.
 public class BiteTitleHud {
-    private static final long FADE_IN = 250L;
-    private static final long FADE_OUT = 500L;
+    /// How long the title lingers past its configured stay time when the fish is never hooked (ms).
+    private static final long EXTRA_TIME = 750L;
 
     public void render(DrawContext drawContext, MinecraftClient client) {
         FOEConfig config = FOEConfig.getConfig();
@@ -23,9 +25,14 @@ public class BiteTitleHud {
             return;
         }
 
+        // Vanish instantly the moment the fish is hooked: lastTimeUsedRod is stamped when the
+        // bobber is reeled in, so if that happened at/after this bite the alert is no longer needed.
+        if (FishCatchHandler.instance().lastTimeUsedRod >= showedAt) {
+            return;
+        }
+
         long elapsed = System.currentTimeMillis() - showedAt;
-        long stay = BiteTitleHandler.instance().time;
-        long total = FADE_IN + stay + FADE_OUT;
+        long total = BiteTitleHandler.instance().time + EXTRA_TIME;
         if (elapsed < 0L || elapsed > total) {
             return;
         }
@@ -35,17 +42,7 @@ public class BiteTitleHud {
             return;
         }
 
-        float alpha;
-        if (elapsed < FADE_IN) {
-            alpha = elapsed / (float) FADE_IN;
-        } else if (elapsed < FADE_IN + stay) {
-            alpha = 1.0f;
-        } else {
-            alpha = 1.0f - (elapsed - FADE_IN - stay) / (float) FADE_OUT;
-        }
-        alpha = Math.clamp(alpha, 0f, 1f);
-
-        int color = ((int) (alpha * 255f) << 24) | (config.biteTitle.textColor & 0xFFFFFF);
+        int color = 0xFF000000 | (config.biteTitle.textColor & 0xFFFFFF);
         Text text = Text.literal(textString);
 
         drawContext.getMatrices().pushMatrix();
