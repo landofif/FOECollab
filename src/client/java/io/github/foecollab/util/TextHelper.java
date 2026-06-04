@@ -5,14 +5,22 @@ import com.google.gson.JsonElement;
 import com.mojang.serialization.JsonOps;
 import io.github.foecollab.FOMC.Constant;
 import net.minecraft.text.MutableText;
+import net.minecraft.text.Style;
+import net.minecraft.text.StyleSpriteSource;
 import net.minecraft.text.Text;
 import net.minecraft.text.TextCodecs;
+import net.minecraft.util.Identifier;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.function.IntPredicate;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class TextHelper {
@@ -318,5 +326,90 @@ public class TextHelper {
         }
         
         return rootContent;
+    }
+
+    // ---- Styled-text editing helpers --------------------------------------
+    // These flatten a Text tree into a parallel char + per-char Style stream,
+    // edit it, then rebuild a MutableText grouping consecutive equal styles.
+    // The tree shape is lost but the visual styling is preserved exactly, which
+    // is all that matters for tooltip / chat display.
+
+    private static StringBuilder flattenChars(Text text, List<Style> outStyles) {
+        StringBuilder sb = new StringBuilder();
+        text.visit((style, str) -> {
+            for (int i = 0; i < str.length(); i++) {
+                sb.append(str.charAt(i));
+                outStyles.add(style);
+            }
+            return Optional.empty();
+        }, Style.EMPTY);
+        return sb;
+    }
+
+    private static MutableText rebuildChars(CharSequence text, List<Style> styles) {
+        MutableText out = Text.empty();
+        int n = text.length();
+        int i = 0;
+        while (i < n) {
+            Style s = styles.get(i);
+            int j = i + 1;
+            while (j < n && Objects.equals(styles.get(j), s)) {
+                j++;
+            }
+            out.append(Text.literal(text.subSequence(i, j).toString()).setStyle(s));
+            i = j;
+        }
+        return out;
+    }
+
+    /** Returns a copy of {@code text} with the given font applied to every char matching {@code isTarget}. */
+    public static Text setFontForChars(Text text, IntPredicate isTarget, Identifier font) {
+        StyleSpriteSource fontSource = new StyleSpriteSource.Font(font);
+        List<Style> styles = new ArrayList<>();
+        StringBuilder chars = flattenChars(text, styles);
+        boolean changed = false;
+        for (int i = 0; i < chars.length(); i++) {
+            if (isTarget.test(chars.charAt(i))) {
+                styles.set(i, styles.get(i).withFont(fontSource));
+                changed = true;
+            }
+        }
+        return changed ? rebuildChars(chars, styles) : text;
+    }
+
+    /** Returns a copy of {@code text} with the first regex match deleted, preserving styling of the rest. */
+    public static Text deleteFirstMatch(Text text, Pattern pattern) {
+        List<Style> styles = new ArrayList<>();
+        StringBuilder chars = flattenChars(text, styles);
+        Matcher m = pattern.matcher(chars);
+        if (!m.find()) {
+            return text;
+        }
+        chars.delete(m.start(), m.end());
+        styles.subList(m.start(), m.end()).clear();
+        return rebuildChars(chars, styles);
+    }
+
+    /** Returns true if any whole tooltip line's flattened string matches the pattern. */
+    public static boolean matches(Text text, Pattern pattern) {
+        return pattern.matcher(text.getString()).find();
+    }
+
+    /** Replaces every key with its value inside each styled run, preserving that run's style. */
+    public static Text replaceInRuns(Text text, Map<String, String> replacements) {
+        boolean[] changed = {false};
+        MutableText out = Text.empty();
+        text.visit((style, str) -> {
+            String replaced = str;
+            for (Map.Entry<String, String> e : replacements.entrySet()) {
+                if (replaced.contains(e.getKey())) {
+                    replaced = replaced.replace(e.getKey(), e.getValue());
+                    changed[0] = true;
+                }
+            }
+            out.append(Text.literal(replaced).setStyle(style));
+            return Optional.empty();
+        }, Style.EMPTY);
+        return changed[0] ? out : text;
     }
 }

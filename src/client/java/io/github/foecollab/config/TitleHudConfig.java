@@ -6,6 +6,9 @@ public class TitleHudConfig {
     public static class TitlePopup {
         @ConfigEntry.Gui.Tooltip
         public boolean useNewTitleSystem = true;
+        @ConfigEntry.Gui.EnumHandler(option = ConfigEntry.Gui.EnumHandler.EnumDisplayOption.BUTTON)
+        @ConfigEntry.Gui.Tooltip
+        public HudAlignment alignment = HudAlignment.CENTER;
         @ConfigEntry.BoundedDiscrete(max = 20, min = 2)
         public int scale = 10;
         @ConfigEntry.BoundedDiscrete(min = 0, max = 100)

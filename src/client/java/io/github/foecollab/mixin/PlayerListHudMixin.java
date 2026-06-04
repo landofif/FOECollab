@@ -4,6 +4,7 @@ import io.github.foecollab.FOMC.Types.Defaults;
 import io.github.foecollab.config.FOEConfig;
 import io.github.foecollab.handler.LoadingHandler;
 import io.github.foecollab.handler.ProfileDataHandler;
+import io.github.foecollab.util.SimpleTagFont;
 import io.github.foecollab.util.TextHelper;
 import net.minecraft.client.gui.hud.PlayerListHud;
 import net.minecraft.client.network.PlayerListEntry;
@@ -25,6 +26,7 @@ public class PlayerListHudMixin {
     // mods (e.g. FishyAddons' MixinPlayerListHud) also @Redirect that exact invoke, and two @Redirects on
     // one instruction are mutually exclusive — the second to apply finds nothing ("Scanned 0 target(s)")
     // and hard-crashes. Modifying the method's return value composes with those redirects instead.
+    // NOTE:  /  are the friend / crew tag glyphs (mod bitmap font).
     @Inject(method = "getPlayerName", at = @At("RETURN"), cancellable = true)
     private void foeApplyTabListTags(PlayerListEntry entry, CallbackInfoReturnable<Text> cir) {
         String playerUuid = entry.getProfile().id().toString();
@@ -43,13 +45,17 @@ public class PlayerListHudMixin {
         }
 
         if (config.friendTracker.showFriendTag && LoadingHandler.instance().isOnServer && ProfileDataHandler.instance().profileData.friends.contains(entry.getProfile().id())) {
-            text = config.friendTracker.isPrefix ? Text.literal(" ").append(text) : text.append(Text.literal(" ").formatted(Formatting.WHITE));
+            text = config.friendTracker.isPrefix ? Text.literal("").append(text) : text.append(Text.literal("").formatted(Formatting.WHITE));
         }
 
         if (config.crewTracker.showCrewTag && LoadingHandler.instance().isOnServer && ProfileDataHandler.instance().profileData.crewMembers.contains(entry.getProfile().id())) {
-            cir.setReturnValue(config.crewTracker.isPrefix ? Text.literal(" ").append(text) : text.append(Text.literal(" ").formatted(Formatting.WHITE)));
-        } else {
-            cir.setReturnValue(text);
+            text = config.crewTracker.isPrefix ? Text.literal("").append(text) : text.append(Text.literal("").formatted(Formatting.WHITE));
         }
+
+        Text result = text;
+        if (config.cleanerDisplay.simpleTags && LoadingHandler.instance().isOnServer) {
+            result = SimpleTagFont.apply(result);
+        }
+        cir.setReturnValue(result);
     }
 }

@@ -92,6 +92,10 @@ public class FOEConfig implements ConfigData {
 
     @ConfigEntry.Category(value = OTHER)
     @ConfigEntry.Gui.CollapsibleObject
+    public TooltipShortenerConfig.CleanerDisplay cleanerDisplay = new TooltipShortenerConfig.CleanerDisplay();
+
+    @ConfigEntry.Category(value = OTHER)
+    @ConfigEntry.Gui.CollapsibleObject
     public NotificationsConfig.Notifications notifications = new NotificationsConfig.Notifications();
 
     @ConfigEntry.Category(value = OTHER)
@@ -101,6 +105,10 @@ public class FOEConfig implements ConfigData {
     @ConfigEntry.Category(value = OTHER)
     @ConfigEntry.Gui.CollapsibleObject
     public TitleHudConfig.TitlePopup titlePopup = new TitleHudConfig.TitlePopup();
+
+    @ConfigEntry.Category(value = OTHER)
+    @ConfigEntry.Gui.CollapsibleObject
+    public BiteTitleConfig.BiteTitle biteTitle = new BiteTitleConfig.BiteTitle();
 
     @ConfigEntry.Category(value = OTHER)
     @ConfigEntry.Gui.CollapsibleObject

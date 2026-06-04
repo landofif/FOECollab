@@ -1,6 +1,7 @@
 package io.github.foecollab.mixin;
 
 import io.github.foecollab.config.FOEConfig;
+import io.github.foecollab.handler.BiteTitleHandler;
 import io.github.foecollab.handler.FishCatchHandler;
 import io.github.foecollab.handler.ItemMarkerHandler;
 import io.github.foecollab.handler.LoadingHandler;
@@ -60,6 +61,13 @@ public class InGameHudMixin {
                                 && this.titleRemainTicks > 0
                                 && Objects.equals(this.title.getString(), "BITE!")
                 )
+                || (
+                        config.biteTitle.enabled
+                                && this.title != null
+                                && !this.title.getString().isEmpty()
+                                && this.titleRemainTicks > 0
+                                && Objects.equals(this.title.getString(), "BITE!")
+                )
         ) {
             ci.cancel();
         }
@@ -80,6 +88,9 @@ public class InGameHudMixin {
     private void injectSetTitle(Text title, CallbackInfo ci) {
         if(LoadingHandler.instance().isOnServer) {
             FishCatchHandler.instance().catchTitle(title);
+            if(config.biteTitle.enabled && title != null && Objects.equals(title.getString(), "BITE!")) {
+                BiteTitleHandler.instance().trigger();
+            }
         }
     }
 

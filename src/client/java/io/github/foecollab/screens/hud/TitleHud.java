@@ -1,6 +1,7 @@
 package io.github.foecollab.screens.hud;
 
 import io.github.foecollab.config.FOEConfig;
+import io.github.foecollab.config.HudAlignment;
 import io.github.foecollab.handler.TitleHandler;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.TextRenderer;
@@ -64,7 +65,8 @@ public class TitleHud {
                 int scaledY = (int) (baseY / scale);
                 AtomicInteger count = new AtomicInteger(0);
 
-                title.forEach(text -> drawContext.drawText(textRenderer, text, scaledX - textRenderer.getWidth(text) / 2, scaledY - ((count.getAndIncrement() + 1) * lineHeight), alphaInt, true));
+                HudAlignment alignment = config.titlePopup.alignment;
+                title.forEach(text -> drawContext.drawText(textRenderer, text, alignX(alignment, scaledX, textRenderer.getWidth(text)), scaledY - ((count.getAndIncrement() + 1) * lineHeight), alphaInt, true));
             } finally {
                 drawContext.getMatrices().popMatrix();
             }
@@ -91,10 +93,21 @@ public class TitleHud {
                 int scaledY = (int) (baseY / scale);
                 AtomicInteger count = new AtomicInteger(0);
 
-                subtitle.forEach(text -> drawContext.drawText(textRenderer, text, scaledX - textRenderer.getWidth(text) / 2, scaledY + (count.getAndIncrement() * lineHeight) + lineHeight, alphaInt, true));
+                HudAlignment alignment = config.titlePopup.alignment;
+                subtitle.forEach(text -> drawContext.drawText(textRenderer, text, alignX(alignment, scaledX, textRenderer.getWidth(text)), scaledY + (count.getAndIncrement() * lineHeight) + lineHeight, alphaInt, true));
             } finally {
                 drawContext.getMatrices().popMatrix();
             }
         }
+    }
+
+    /// X coordinate for a line of the given width drawn from anchor {@code anchorX}, per alignment.
+    /// The popup's position anchor stays fixed; alignment only changes how lines flow from it.
+    private static int alignX(HudAlignment alignment, int anchorX, int width) {
+        return switch (alignment) {
+            case LEFT -> anchorX;
+            case RIGHT -> anchorX - width;
+            case CENTER -> anchorX - width / 2;
+        };
     }
 }

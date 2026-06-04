@@ -17,6 +17,8 @@ public class MainHudRenderer implements HudRenderCallback {
     final PetEquipHud petEquipHud = new PetEquipHud();
     final NotificationHud notificationHud = new NotificationHud();
     final TitleHud titleHud = new TitleHud();
+    final BiteTitleHud biteTitleHud = new BiteTitleHud();
+    final BobberTimerHud bobberTimerHud = new BobberTimerHud();
     final ItemFrameTooltipHud itemFrameTooltipHud = new ItemFrameTooltipHud();
     final BarHud barHud = new BarHud();
     final ContestHud contestHud = new ContestHud();
@@ -36,6 +38,12 @@ public class MainHudRenderer implements HudRenderCallback {
                 if(config.titlePopup.useNewTitleSystem) {
                     this.titleHud.render(drawContext, MinecraftClient.getInstance());
                 }
+
+                if(config.biteTitle.enabled) {
+                    this.biteTitleHud.render(drawContext, MinecraftClient.getInstance());
+                }
+
+                this.bobberTimerHud.render(drawContext, MinecraftClient.getInstance());
 
                 if(config.itemFrameTooltip.showTooltip) {
                     this.itemFrameTooltipHud.render(drawContext, MinecraftClient.getInstance());

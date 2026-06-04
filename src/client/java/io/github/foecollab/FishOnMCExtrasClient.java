@@ -5,6 +5,8 @@ import io.github.foecollab.config.ConfigConstants;
 import io.github.foecollab.config.FOEConfig;
 import io.github.foecollab.handler.*;
 import io.github.foecollab.handler.packet.PacketHandler;
+import io.github.foecollab.util.LocationNameHelper;
+import io.github.foecollab.util.SimpleTagFont;
 import io.github.foecollab.screens.hud.MainHudRenderer;
 import io.github.foecollab.screens.main.FoETitleScreen;
 import io.github.foecollab.screens.petCalculator.PetCalculatorScreen;
@@ -225,6 +227,12 @@ public class FishOnMCExtrasClient implements ClientModInitializer {
             text = ChatScreenHandler.instance().appendTooltip(text);
             text = ChatTagHandler.instance().displayTags(text);
             text = ChatTagHandler.instance().changePetTags(text);
+            if (CONFIG.cleanerDisplay.shortenLocationNames) {
+                text = LocationNameHelper.shorten(text);
+            }
+            if (CONFIG.cleanerDisplay.simpleTags) {
+                text = SimpleTagFont.apply(text);
+            }
         }
         return text;
     }
@@ -244,6 +252,9 @@ public class FishOnMCExtrasClient implements ClientModInitializer {
             ArmorHandler.instance().appendTooltip(textList, itemStack);
             FishingStatsHandler.instance().appendTooltip(textList, itemStack);
             AuctionHandler.instance().appendTooltip(textList, itemStack);
+            // Must run last: it removes/edits lines, which would break the fixed
+            // line indices the handlers above rely on.
+            TooltipShortenerHandler.instance().cleanTooltip(textList, itemStack);
         }
     }
 

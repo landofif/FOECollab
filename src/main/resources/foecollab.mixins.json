@@ -28,6 +28,7 @@
     "RecipeBookScreenAccessor",
     "ReconfiguringMixin",
     "SoundManagerMixin",
-    "TextFieldWidgetMixin"
+    "TextFieldWidgetMixin",
+    "TextRendererMixin"
   ]
 }

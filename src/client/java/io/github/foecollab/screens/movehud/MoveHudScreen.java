@@ -143,6 +143,56 @@ public class MoveHudScreen extends Screen {
             AutoConfig.getConfigHolder(FOEConfig.class).save();
         }));
 
+        // Notification HUD
+        MovableBoxWidget.Alignment notificationAlignment = switch (config.notifications.alignment) {
+            case LEFT -> MovableBoxWidget.Alignment.LEFT;
+            case RIGHT -> MovableBoxWidget.Alignment.RIGHT;
+            case CENTER -> MovableBoxWidget.Alignment.CENTER;
+        };
+        Text notificationLabel = Text.literal("Notifications");
+        int notificationX = config.notifications.hudX;
+        int notificationY = config.notifications.hudY;
+        int notificationFontSize = config.notifications.fontSize;
+        int notificationMaxLength = textRenderer.getWidth(notificationLabel);
+        movableBoxWidgetList.add(new MovableBoxWidget(textRenderer, notificationX, notificationY, notificationAlignment, notificationLabel, notificationFontSize, 1, 20, 1, notificationMaxLength, (xPercent, yPercent) -> {
+            config.notifications.hudX = xPercent;
+            config.notifications.hudY = yPercent;
+            AutoConfig.getConfigHolder(FOEConfig.class).save();
+        }, fontSize -> {
+            config.notifications.fontSize = fontSize;
+            AutoConfig.getConfigHolder(FOEConfig.class).save();
+        }));
+
+        // Bite Title HUD (the custom "bite" title, separate from the caught-fish popup)
+        int biteTitleX = config.biteTitle.hudX;
+        int biteTitleY = config.biteTitle.hudY;
+        int biteTitleFontSize = config.biteTitle.scale;
+        Text biteTitleLabel = Text.literal(config.biteTitle.text == null || config.biteTitle.text.isEmpty() ? "Bite Title" : config.biteTitle.text);
+        int biteTitleMaxLength = textRenderer.getWidth(biteTitleLabel);
+        movableBoxWidgetList.add(new MovableBoxWidget(textRenderer, biteTitleX, biteTitleY, MovableBoxWidget.Alignment.CENTER, biteTitleLabel, biteTitleFontSize, 2, 40, 1, biteTitleMaxLength, (xPercent, yPercent) -> {
+            config.biteTitle.hudX = xPercent;
+            config.biteTitle.hudY = yPercent;
+            AutoConfig.getConfigHolder(FOEConfig.class).save();
+        }, fontSize -> {
+            config.biteTitle.scale = fontSize;
+            AutoConfig.getConfigHolder(FOEConfig.class).save();
+        }));
+
+        // Bobber Timer HUD (the waiting time, when shown as a HUD element)
+        int bobberTimerX = config.bobberTracker.timerHudX;
+        int bobberTimerY = config.bobberTracker.timerHudY;
+        int bobberTimerFontSize = config.bobberTracker.timerHudFontSize;
+        Text bobberTimerLabel = Text.literal("Bobber Timer");
+        int bobberTimerMaxLength = textRenderer.getWidth(bobberTimerLabel);
+        movableBoxWidgetList.add(new MovableBoxWidget(textRenderer, bobberTimerX, bobberTimerY, MovableBoxWidget.Alignment.CENTER, bobberTimerLabel, bobberTimerFontSize, 1, 40, 1, bobberTimerMaxLength, (xPercent, yPercent) -> {
+            config.bobberTracker.timerHudX = xPercent;
+            config.bobberTracker.timerHudY = yPercent;
+            AutoConfig.getConfigHolder(FOEConfig.class).save();
+        }, fontSize -> {
+            config.bobberTracker.timerHudFontSize = fontSize;
+            AutoConfig.getConfigHolder(FOEConfig.class).save();
+        }));
+
         movableBoxWidgetList.forEach(this::addDrawableChild);
     }
 

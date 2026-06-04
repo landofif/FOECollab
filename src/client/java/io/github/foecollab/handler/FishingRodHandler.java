@@ -53,6 +53,11 @@ public class FishingRodHandler {
     public boolean isWrongReel = false;
     public boolean isWrongLine = false;
 
+    // Bobber waiting-time, surfaced to BobberTimerHud when shown as a HUD element rather than
+    // floating over the bobber. Set each tick the player's own bobber is out; reset before each scan.
+    public boolean showTimerHud = false;
+    public float timerSeconds = 0f;
+
 
     public static FishingRodHandler instance() {
         if (INSTANCE == null) {
@@ -166,7 +171,13 @@ public class FishingRodHandler {
 
                 if (config.bobberTracker.showWaitingTime) {
                     float seconds = fishingBobberEntity.age / 20f;
-                    this.addText(textList, TextHelper.concat(Text.literal(String.format("%.1f", seconds)).formatted(Formatting.WHITE, Formatting.BOLD), Text.literal(" sec.").formatted(Formatting.GRAY)));
+                    if (config.bobberTracker.timerAsHud) {
+                        // Render as a fixed HUD element (see BobberTimerHud) instead of over the bobber.
+                        this.showTimerHud = true;
+                        this.timerSeconds = seconds;
+                    } else {
+                        this.addText(textList, TextHelper.concat(Text.literal(String.format("%.1f", seconds)).withColor(config.bobberTracker.timerColor).formatted(Formatting.BOLD), Text.literal("s").formatted(Formatting.GRAY)));
+                    }
                 }
 
                 if((config.fun.immersionMode || config.fun.biteBobber)
@@ -227,13 +238,14 @@ public class FishingRodHandler {
                 itemDisplayEntity.setItemStack(baitStack);
                 itemDisplayEntity.setPosition(entity.getEntityPos().add(0, -0.32, 0));
                 itemDisplayEntity.setBillboardMode(DisplayEntity.BillboardMode.VERTICAL);
-                itemDisplayEntity.setTransformation(new AffineTransformation(null, null, new Vector3f(0.75f, 0.75f, 0.75f), null));
+                itemDisplayEntity.setTransformation(new AffineTransformation(null, null, new Vector3f(0.6f, 0.6f, 0.6f), null));
             }
         }
     }
 
     public void beforeTickEntitiess() {
         isBobberOut = false;
+        showTimerHud = false;
     }
 
     public void afterTickEntities(MinecraftClient minecraftClient) {
