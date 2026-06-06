@@ -22,6 +22,9 @@ public class TimerHandler {
     // Moon timer variables
     public long moonTimer = 0L;
     public final long moonCycleTime = 160L * 60L * 1000L; // 160 minutes in milliseconds
+    // The moon actually rises one hour before the cycle countdown reaches zero, so the
+    // displayed timer is shifted forward by this lead time to hit zero at moonrise.
+    public final long moonLeadTime = 60L * 60L * 1000L; // 1h
     public long moonOffset = calculateMoonOffset(); // Calculate once at initialization
 
     public static TimerHandler instance() {
@@ -45,8 +48,11 @@ public class TimerHandler {
         long contestEndTime = contestEndTotalTime;
         this.contestEndTimer = contestEndTime - ((currentTime + contestEndOffset) % contestEndTime);
 
-        // Calculate moon timer using EXACTLY the same approach as bait shop
-        this.moonTimer = moonCycleTime - ((currentTime + moonOffset) % moonCycleTime);
+        // Calculate moon timer using EXACTLY the same approach as bait shop, then pull it
+        // forward by the lead time so it reaches zero at the actual moonrise (which is one
+        // hour before the raw cycle boundary). floorMod keeps it within [0, moonCycleTime).
+        long rawMoonTimer = moonCycleTime - ((currentTime + moonOffset) % moonCycleTime);
+        this.moonTimer = Math.floorMod(rawMoonTimer - moonLeadTime, moonCycleTime);
     }
 
     public boolean onReceiveMessage(Text text) {
@@ -70,9 +76,10 @@ public class TimerHandler {
         // Get midnight today in UTC+0
         java.time.ZonedDateTime midnightUTC0 = utc0Now.toLocalDate().atStartOfDay(utc0);
 
-        //TODO FIX THIS SYSTEM
-        // First moon event of the day is at 01:03 UTC+0, plusHours(1).plusMinutes(3).plusSeconds(1) isn't perfectly synced.. but close enough.
-        java.time.ZonedDateTime firstMoonToday = midnightUTC0.plusHours(1).plusMinutes(3).plusSeconds(1);
+        // Anchor that fixes the 160-minute cycle's phase (a cycle boundary lands at 00:03:01
+        // UTC+0). This is only the phase reference — the 1h moonrise lead is applied separately
+        // in tick() via moonLeadTime, so don't bake it in here.
+        java.time.ZonedDateTime firstMoonToday = midnightUTC0.plusMinutes(3).plusSeconds(1);
         
         // Convert to milliseconds
         long firstMoonMillis = firstMoonToday.toInstant().toEpochMilli();

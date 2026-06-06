@@ -1,6 +1,5 @@
 package io.github.foecollab.util;
 
-import net.minecraft.text.StyleSpriteSource;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 
@@ -20,8 +19,6 @@ import java.util.Set;
  */
 public class SimpleTagFont {
     public static final Identifier FONT = Identifier.of("foecollab", "tags");
-    /** The {@code foecollab:tags} font as a style source, reused by the global render hook. */
-    public static final StyleSpriteSource FONT_SOURCE = new StyleSpriteSource.Font(FONT);
 
     // Every codepoint that has a glyph in assets/foecollab/font/tags.json.
     private static final Set<Integer> CHARS = Set.of(
@@ -45,11 +42,8 @@ public class SimpleTagFont {
             0xF036, // legendary
             0xF037, // mythical
             0xF092, // special
-            // Variants
-            0xF041, // albino
-            0xF042, // melanistic
-            0xF043, // trophy
-            0xF044, // fabled
+            // Variants — albino / melanistic / trophy / fabled intentionally left out so
+            // they keep the server's original glyph (their simplified squares were removed).
             0xF098, // alternate
             0xF102, // spooky
             0xF179  // frozen

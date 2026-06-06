@@ -223,11 +223,14 @@ public class FishOnMCExtrasClient implements ClientModInitializer {
         if(LoadingHandler.instance().isOnServer) {
             // Apply modifications to messages that are allowed
             text = ContestHandler.instance().modifyMessage(text);
-            text = PetTooltipHandler.instance().appendTooltip(text);
             text = ChatScreenHandler.instance().appendTooltip(text);
             text = ChatTagHandler.instance().displayTags(text);
             text = ChatTagHandler.instance().changePetTags(text);
-            if (CONFIG.cleanerDisplay.shortenLocationNames) {
+            // Only rewrite location names on the server's own LOCATION / LOCATIONS messages.
+            // Other messages (e.g. REACTIONS) can legitimately contain a full location name
+            // that must stay as-is, so we leave anything that doesn't start with LOCATION alone.
+            if (CONFIG.cleanerDisplay.shortenLocationNames
+                    && text.getString().stripLeading().startsWith("LOCATION")) {
                 text = LocationNameHelper.shorten(text);
             }
             if (CONFIG.cleanerDisplay.simpleTags) {
@@ -248,7 +251,6 @@ public class FishOnMCExtrasClient implements ClientModInitializer {
 
     private void onItemTooltipCallback(ItemStack itemStack, Item.TooltipContext tooltipContext, TooltipType tooltipType, List<Text> textList) {
         if(LoadingHandler.instance().isOnServer) {
-            PetTooltipHandler.instance().appendTooltip(textList, itemStack);
             ArmorHandler.instance().appendTooltip(textList, itemStack);
             FishingStatsHandler.instance().appendTooltip(textList, itemStack);
             AuctionHandler.instance().appendTooltip(textList, itemStack);

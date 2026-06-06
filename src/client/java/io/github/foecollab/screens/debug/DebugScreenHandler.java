@@ -225,7 +225,6 @@ public class DebugScreenHandler {
                 ));
             }
             case PETTOOLTIP -> {
-                PetTooltipHandler petTooltipHandler = PetTooltipHandler.instance();
             }
             case BOSSBAR -> {
                 BossBarHandler bossBarHandler = BossBarHandler.instance();

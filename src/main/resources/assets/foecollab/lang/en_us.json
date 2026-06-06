@@ -335,8 +335,7 @@
   "text.autoconfig.foecollab.option.bobberTracker.timerHudY": "Timer HUD §fY §7position",
   "text.autoconfig.foecollab.option.bobberTracker.showBait": "Show bait on bobber",
 
-  "text.autoconfig.foecollab.option.petTooltip": "§f§lPet Tooltip Options",
-  "text.autoconfig.foecollab.option.petTooltip.showPetPercentages": "Show Pet Stat percentages",
+  "text.autoconfig.foecollab.option.petTooltip": "§f§lPet Calculator Options",
   "text.autoconfig.foecollab.option.petTooltip.decimalPlaces": "Amount of decimals shown on percentages",
 
   "text.autoconfig.foecollab.option.itemFrameTooltip": "§f§lItem Frame Tooltip Options",

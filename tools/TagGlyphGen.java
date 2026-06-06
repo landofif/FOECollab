@@ -65,11 +65,8 @@ public class TagGlyphGen {
             new Tag(0xF036, "legendary", 'L', 0xD98103),
             new Tag(0xF037, "mythical", 'M', 0xC93832),
             new Tag(0xF092, "special", 'S', 0xDD7ACF),
-            // Variants
-            new Tag(0xF041, "albino", 'A', 0xC4C19F),
-            new Tag(0xF042, "melanistic", 'M', 0x1C1C1C),
-            new Tag(0xF043, "trophy", 'T', 0xD5BF3B),
-            new Tag(0xF044, "fabled", 'F', 0x82171E),
+            // Variants — albino / melanistic / trophy / fabled are intentionally omitted so they
+            // keep the server's original glyph (their simplified squares were removed).
             new Tag(0xF098, "alternate", 'A', 0x9CB4FC),
             new Tag(0xF102, "spooky", 'S', 0x2E2E8F),
             new Tag(0xF179, "frozen", 'F', 0x7FB0E7),

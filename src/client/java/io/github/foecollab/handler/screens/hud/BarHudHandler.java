@@ -7,6 +7,7 @@ import io.github.foecollab.config.FOEConfig;
 import io.github.foecollab.handler.BossBarHandler;
 import io.github.foecollab.handler.ScoreboardHandler;
 import io.github.foecollab.handler.TabHandler;
+import io.github.foecollab.util.LocationNameHelper;
 import io.github.foecollab.util.TextHelper;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
@@ -89,9 +90,16 @@ public class BarHudHandler {
             }
         }
 
+        Text locationName = BossBarHandler.instance().currentLocation != null
+                ? BossBarHandler.instance().currentLocation.TAG
+                : Text.empty();
+        if (config.cleanerDisplay.shortenLocationNames) {
+            locationName = LocationNameHelper.shorten(locationName);
+        }
+
         return TextHelper.concat(
                 Text.literal("\uF039 ").formatted(Formatting.WHITE),
-                BossBarHandler.instance().currentLocation != null ? BossBarHandler.instance().currentLocation.TAG : Text.empty(),
+                locationName,
                 locationCatch,
                 climateText,
                 time

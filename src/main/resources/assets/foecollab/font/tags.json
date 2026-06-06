@@ -17,10 +17,6 @@
     {"type":"bitmap","file":"foecollab:font/tag/legendary.png","ascent":7,"height":7,"chars":["\uF036"]},
     {"type":"bitmap","file":"foecollab:font/tag/mythical.png","ascent":7,"height":7,"chars":["\uF037"]},
     {"type":"bitmap","file":"foecollab:font/tag/special.png","ascent":7,"height":7,"chars":["\uF092"]},
-    {"type":"bitmap","file":"foecollab:font/tag/albino.png","ascent":7,"height":7,"chars":["\uF041"]},
-    {"type":"bitmap","file":"foecollab:font/tag/melanistic.png","ascent":7,"height":7,"chars":["\uF042"]},
-    {"type":"bitmap","file":"foecollab:font/tag/trophy.png","ascent":7,"height":7,"chars":["\uF043"]},
-    {"type":"bitmap","file":"foecollab:font/tag/fabled.png","ascent":7,"height":7,"chars":["\uF044"]},
     {"type":"bitmap","file":"foecollab:font/tag/alternate.png","ascent":7,"height":7,"chars":["\uF098"]},
     {"type":"bitmap","file":"foecollab:font/tag/spooky.png","ascent":7,"height":7,"chars":["\uF102"]},
     {"type":"bitmap","file":"foecollab:font/tag/frozen.png","ascent":7,"height":7,"chars":["\uF179"]}
