@@ -13,6 +13,9 @@ import java.util.List;
 public class OtherPlayerHandler {
     private static OtherPlayerHandler INSTANCE = new OtherPlayerHandler();
 
+    // Private-use glyph the server stamps onto FoE-relevant text-display nameplates.
+    private static final String NAMEPLATE_MARKER = "";
+
     public PlayerListEntry highlightedPlayer = null;
     public long highlightStartTime = 0L;
     public boolean isHighlighted = false;
@@ -36,46 +39,50 @@ public class OtherPlayerHandler {
     }
 
     public void tickEntities(Entity entity, MinecraftClient minecraftClient) {
-        if(
-                minecraftClient.options.hudHidden
-                && entity instanceof DisplayEntity.TextDisplayEntity textDisplayEntity
-                && textDisplayEntity.getText().getString().contains("")
-        ) {
-            textDisplayEntity.setTextOpacity((byte) 24);
-
-            if(!hiddenNamePlates.contains(entity.getId())) {
-                hiddenNamePlates.add(entity.getId());
-            }
-
-        } else if(!minecraftClient.options.hudHidden
-                && !hiddenNamePlates.isEmpty()
-                && minecraftClient.world != null) {
+        // Restore previously dimmed nameplates once the HUD is shown again.
+        if (!minecraftClient.options.hudHidden && !hiddenNamePlates.isEmpty() && minecraftClient.world != null) {
             hiddenNamePlates.forEach(id -> {
                 Entity namePlate = minecraftClient.world.getEntityById(id);
-                if(namePlate != null) {
+                if (namePlate != null) {
                     ((DisplayEntity.TextDisplayEntity) namePlate).setTextOpacity((byte) -1);
                 }
             });
             hiddenNamePlates.clear();
         }
 
-        // Nameplate FoE
-        if(entity instanceof DisplayEntity.TextDisplayEntity textDisplayEntity
-                && textDisplayEntity.getText().getString().contains("")
-        ) {
-            Defaults.FoEDevType senderDev = Defaults.foeDevs.values().stream()
-                    .filter(foEDevType -> textDisplayEntity.getText().getString().contains(foEDevType.name))
-                    .findFirst()
-                    .orElse(null);
+        if (!(entity instanceof DisplayEntity.TextDisplayEntity textDisplayEntity)) {
+            return;
+        }
 
-            if (senderDev != null) {
-                String jsonText = TextHelper.textToJson(textDisplayEntity.getText());
-                jsonText = TextHelper.replaceToFoE(jsonText, senderDev.usePurpleTag);
-                if (!senderDev.usePurpleTag) {
-                    jsonText = jsonText.replace("B05BF9", "00AF0E");
-                }
-                textDisplayEntity.setText(TextHelper.jsonToText(jsonText));
+        // Resolve the nameplate text once. getText().getString() walks the text tree and
+        // allocates, and a crowd has many nameplates; the old code rebuilt this several
+        // times per entity per tick (once per check plus once per dev in the stream below).
+        String nameplateText = textDisplayEntity.getText().getString();
+        if (!nameplateText.contains(NAMEPLATE_MARKER)) {
+            return;
+        }
+
+        // Dim FoE nameplates while the HUD is hidden (e.g. for screenshots).
+        if (minecraftClient.options.hudHidden) {
+            textDisplayEntity.setTextOpacity((byte) 24);
+            if (!hiddenNamePlates.contains(entity.getId())) {
+                hiddenNamePlates.add(entity.getId());
             }
+        }
+
+        // Re-tag FoE dev nameplates.
+        Defaults.FoEDevType senderDev = Defaults.foeDevs.values().stream()
+                .filter(foEDevType -> nameplateText.contains(foEDevType.name))
+                .findFirst()
+                .orElse(null);
+
+        if (senderDev != null) {
+            String jsonText = TextHelper.textToJson(textDisplayEntity.getText());
+            jsonText = TextHelper.replaceToFoE(jsonText, senderDev.usePurpleTag);
+            if (!senderDev.usePurpleTag) {
+                jsonText = jsonText.replace("B05BF9", "00AF0E");
+            }
+            textDisplayEntity.setText(TextHelper.jsonToText(jsonText));
         }
     }
 }

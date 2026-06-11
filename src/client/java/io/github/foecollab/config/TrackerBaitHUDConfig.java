@@ -13,9 +13,9 @@ public class TrackerBaitHUDConfig {
         public boolean rightAlignment = false;
         @ConfigEntry.Gui.Tooltip
         public boolean calculateLures = true;
-        @ConfigEntry.BoundedDiscrete(min = 0, max = 100)
+        @ConfigEntry.Gui.Excluded
         public int hudX = 50;
-        @ConfigEntry.BoundedDiscrete(min = 0, max = 100)
+        @ConfigEntry.Gui.Excluded
         public int hudY = 90;
         @ConfigEntry.BoundedDiscrete(min = 0, max = 100)
         public int backgroundOpacity = 40;

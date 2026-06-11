@@ -3,7 +3,8 @@ package io.github.foecollab.handler;
 import io.github.foecollab.FOMC.Constant;
 import io.github.foecollab.config.FOEConfig;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.sound.SoundCategory;
+import net.minecraft.client.sound.PositionedSoundInstance;
+import net.minecraft.sound.SoundEvent;
 import net.minecraft.sound.SoundEvents;
 
 import java.util.HashMap;
@@ -59,20 +60,39 @@ public class NotificationSoundHandler {
         }
     }
 
+    /** Loud, master-category default for notification sounds (1.0 = full master volume). */
+    private static final float DEFAULT_VOLUME = 1.0f;
+    /** Extra amplitude multiplier on top of the configured volume; >1.0 plays a stacked copy. */
+    private static final float LOUDNESS_BOOST = 1.5f;
+
     public void playSoundWarning(SoundType soundType, MinecraftClient client) {
-        if(client.player != null) {
-            switch (soundType) {
-                case PLING -> client.player.playSound(SoundEvents.BLOCK_NOTE_BLOCK_PLING.value(), client.options.getSoundVolume(SoundCategory.RECORDS), 1f);
-                case BASS -> client.player.playSound(SoundEvents.BLOCK_NOTE_BLOCK_BASS.value(), client.options.getSoundVolume(SoundCategory.RECORDS), 1f);
-                case BELL -> client.player.playSound(SoundEvents.BLOCK_NOTE_BLOCK_BELL.value(), client.options.getSoundVolume(SoundCategory.RECORDS), 1f);
-                case BIT -> client.player.playSound(SoundEvents.BLOCK_NOTE_BLOCK_BIT.value(), client.options.getSoundVolume(SoundCategory.RECORDS), 1f);
-                case CHIME -> client.player.playSound(SoundEvents.BLOCK_NOTE_BLOCK_CHIME.value(), client.options.getSoundVolume(SoundCategory.RECORDS), 1f);
-                case DIDGERIDOO -> client.player.playSound(SoundEvents.BLOCK_NOTE_BLOCK_DIDGERIDOO.value(), client.options.getSoundVolume(SoundCategory.RECORDS), 1f);
-                case COW_BELL -> client.player.playSound(SoundEvents.BLOCK_NOTE_BLOCK_COW_BELL.value(), client.options.getSoundVolume(SoundCategory.RECORDS), 1f);
-                case FLUTE -> client.player.playSound(SoundEvents.BLOCK_NOTE_BLOCK_FLUTE.value(), client.options.getSoundVolume(SoundCategory.RECORDS), 1f);
-                case GUITAR -> client.player.playSound(SoundEvents.BLOCK_NOTE_BLOCK_GUITAR.value(), client.options.getSoundVolume(SoundCategory.RECORDS), 1f);
-                case HARP -> client.player.playSound(SoundEvents.BLOCK_NOTE_BLOCK_HARP.value(), client.options.getSoundVolume(SoundCategory.RECORDS), 1f);
-            }
+        playSoundWarning(soundType, client, DEFAULT_VOLUME);
+    }
+
+    public void playSoundWarning(SoundType soundType, MinecraftClient client, float volume) {
+        if (client.player == null || volume <= 0f) {
+            return;
+        }
+        SoundEvent sound = switch (soundType) {
+            case PLING -> SoundEvents.BLOCK_NOTE_BLOCK_PLING.value();
+            case BASS -> SoundEvents.BLOCK_NOTE_BLOCK_BASS.value();
+            case BELL -> SoundEvents.BLOCK_NOTE_BLOCK_BELL.value();
+            case BIT -> SoundEvents.BLOCK_NOTE_BLOCK_BIT.value();
+            case CHIME -> SoundEvents.BLOCK_NOTE_BLOCK_CHIME.value();
+            case DIDGERIDOO -> SoundEvents.BLOCK_NOTE_BLOCK_DIDGERIDOO.value();
+            case COW_BELL -> SoundEvents.BLOCK_NOTE_BLOCK_COW_BELL.value();
+            case FLUTE -> SoundEvents.BLOCK_NOTE_BLOCK_FLUTE.value();
+            case GUITAR -> SoundEvents.BLOCK_NOTE_BLOCK_GUITAR.value();
+            case HARP -> SoundEvents.BLOCK_NOTE_BLOCK_HARP.value();
+        };
+        // Master-category, non-positional playback so no sub-slider (Players, Note Blocks, ...)
+        // can quiet it. A single instance's amplitude caps at 1.0 no matter the volume value, so
+        // the boost past 100% comes from stacking a second copy of the same sound.
+        float boosted = volume * LOUDNESS_BOOST;
+        client.getSoundManager().play(PositionedSoundInstance.master(sound, 1f, Math.min(boosted, 1f)));
+        float extra = Math.min(boosted - 1f, 1f);
+        if (extra > 0f) {
+            client.getSoundManager().play(PositionedSoundInstance.master(sound, 1f, extra));
         }
     }
 

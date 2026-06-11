@@ -23,23 +23,31 @@ public abstract class EntityMixin<T extends Entity, S extends EntityRenderState>
 
     @Inject(method = "isCustomNameVisible", at = @At("RETURN"), cancellable = true)
     private void injectShouldRenderName(CallbackInfoReturnable<Boolean> cir) {
-        if(LoadingHandler.instance().isOnServer
-                && this.getName().getString().contains("'s")
-                && this.getName().getString().contains("Pet")
-        ) {
-            if(MinecraftClient.getInstance().player != null
-                    && this.getName().getString().contains(MinecraftClient.getInstance().player.getName().getString())
-            ) {
-                if(config.petFollower.ownPet != HiderHandler.FollowingPetState.OFF) {
-                    cir.setReturnValue(false);
-                }
-            } else if(config.petFollower.otherPets != HiderHandler.FollowingPetState.OFF) {
+        // This runs for every named entity (every player/pet nameplate) every frame.
+        // Only the pet-follower name-hiding feature changes the result, so bail before
+        // doing any string work when it's disabled (the common case).
+        if (config.petFollower.ownPet == HiderHandler.FollowingPetState.OFF
+                && config.petFollower.otherPets == HiderHandler.FollowingPetState.OFF) {
+            return;
+        }
+        if (!LoadingHandler.instance().isOnServer) {
+            return;
+        }
+
+        String name = this.getName().getString();
+        if (!name.contains("'s") || !name.contains("Pet")) {
+            return;
+        }
+
+        MinecraftClient client = MinecraftClient.getInstance();
+        boolean isOwnPet = client.player != null
+                && name.contains(client.player.getName().getString());
+        if (isOwnPet) {
+            if (config.petFollower.ownPet != HiderHandler.FollowingPetState.OFF) {
                 cir.setReturnValue(false);
-            } else {
-                cir.setReturnValue(cir.getReturnValue());
             }
-        } else {
-            cir.setReturnValue(cir.getReturnValue());
+        } else if (config.petFollower.otherPets != HiderHandler.FollowingPetState.OFF) {
+            cir.setReturnValue(false);
         }
     }
 }

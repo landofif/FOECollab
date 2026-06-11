@@ -22,6 +22,7 @@ public class TrackerContestHUDConfig {
     
     public static class ContestTracker {
         public boolean showContest = true;
+        public boolean hideTitle = false;
         @ConfigEntry.Gui.Tooltip
         public boolean useOldContestHUD = false;
         @ConfigEntry.Gui.Tooltip
@@ -52,9 +53,9 @@ public class TrackerContestHUDConfig {
         public int backgroundOpacity = 40;
         @ConfigEntry.BoundedDiscrete(max = 20, min = 2)
         public int fontSize = 8;
-        @ConfigEntry.BoundedDiscrete(min = 0, max = 100)
+        @ConfigEntry.Gui.Excluded
         public int hudX = 0;
-        @ConfigEntry.BoundedDiscrete(min = 0, max = 100)
+        @ConfigEntry.Gui.Excluded
         public int hudY = 0;
         
         /**

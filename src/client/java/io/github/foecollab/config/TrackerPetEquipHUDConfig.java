@@ -25,9 +25,9 @@ public class TrackerPetEquipHUDConfig {
             public int fontSize = 8;
             @ConfigEntry.BoundedDiscrete(min = 0, max = 100)
             public int backgroundOpacity = 40;
-            @ConfigEntry.BoundedDiscrete(min = 0, max = 100)
+            @ConfigEntry.Gui.Excluded
             public int hudX = 0;
-            @ConfigEntry.BoundedDiscrete(min = 0, max = 100)
+            @ConfigEntry.Gui.Excluded
             public int hudY = 0;
 
         }

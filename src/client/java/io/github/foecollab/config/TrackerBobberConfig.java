@@ -7,9 +7,8 @@ public class TrackerBobberConfig {
         public boolean skyLightWarning = true;
         public boolean showWaitingTime = false;
         @ConfigEntry.ColorPicker
-        @ConfigEntry.Gui.Tooltip
         public int timerColor = 0xFFFFFF;
-        @ConfigEntry.Gui.Tooltip
+        public boolean timerSecondsSuffix = true;
         public boolean timerAsHud = false;
         @ConfigEntry.BoundedDiscrete(min = 1, max = 40)
         public int timerHudFontSize = 20;

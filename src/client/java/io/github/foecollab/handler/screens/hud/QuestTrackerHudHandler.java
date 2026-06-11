@@ -1,6 +1,7 @@
 package io.github.foecollab.handler.screens.hud;
 
 import io.github.foecollab.FOMC.Constant;
+import io.github.foecollab.common.HudFont;
 import io.github.foecollab.common.Theming;
 import io.github.foecollab.config.FOEConfig;
 import io.github.foecollab.handler.BossBarHandler;
@@ -34,7 +35,7 @@ public class QuestTrackerHudHandler {
         FOEConfig config = FOEConfig.getConfig();
         List<Text> textList = new ArrayList<>();
 
-        if (ThemingHandler.instance().currentThemeType == Theming.ThemeType.OFF) {
+        if (!config.questTracker.hideTitle && ThemingHandler.instance().currentThemeType == Theming.ThemeType.OFF) {
             if(config.questTracker.rightAlignment) {
                 textList.add(TextHelper.concat(
                         this.getTitle().copy().formatted(Formatting.GRAY),
@@ -51,45 +52,48 @@ public class QuestTrackerHudHandler {
         if(QuestHandler.instance().isQuestInitialized()) {
             List<QuestHandler.Quest> activeQuests = BossBarHandler.instance().currentLocation == Constant.SPAWNHUB ? QuestHandler.instance().activeQuests.get(Constant.CYPRESS_LAKE) : QuestHandler.instance().activeQuests.get(BossBarHandler.instance().currentLocation);
 
-            textList.add(TextHelper.concat(
-                    Text.literal("ʟᴏᴄ.: ").formatted(Formatting.GRAY),
-                    BossBarHandler.instance().currentLocation == Constant.SPAWNHUB ? Constant.CYPRESS_LAKE.TAG : BossBarHandler.instance().currentLocation.TAG
-            ));
+            if (!config.questTracker.hideLocation) {
+                textList.add(TextHelper.concat(
+                        Text.literal("ʟᴏᴄ.: ").formatted(Formatting.GRAY),
+                        BossBarHandler.instance().currentLocation == Constant.SPAWNHUB ? Constant.CYPRESS_LAKE.TAG : BossBarHandler.instance().currentLocation.TAG
+                ));
+            }
 
             if(activeQuests != null) {
+                boolean hideNumbers = config.questTracker.hideQuestNumbers;
                 activeQuests.forEach(quest -> {
+                    // "#<slot>: " prefix, dropped entirely when quest numbers are hidden.
+                    Text prefix = hideNumbers ? Text.empty() : TextHelper.concat(
+                            Text.literal("#").formatted(Formatting.GRAY),
+                            Text.literal(String.valueOf(quest.slot)).formatted(Formatting.GRAY),
+                            Text.literal(": ").formatted(Formatting.GRAY)
+                    );
                     if(quest.questDone()) {
                         textList.add(TextHelper.concat(
-                                Text.literal("#").formatted(Formatting.GRAY),
-                                Text.literal(String.valueOf(quest.slot)).formatted(Formatting.GRAY),
-                                Text.literal(": ").formatted(Formatting.GRAY),
+                                prefix,
                                 Text.literal("ꞯᴜᴇѕᴛ ᴅᴏɴᴇ").formatted(Formatting.GREEN, Formatting.BOLD)
                         ));
                     } else if (!quest.isStarted) {
                         textList.add(TextHelper.concat(
-                                Text.literal("#").formatted(Formatting.GRAY),
-                                Text.literal(String.valueOf(quest.slot)).formatted(Formatting.GRAY),
-                                Text.literal(": ").formatted(Formatting.GRAY),
+                                prefix,
                                 Text.literal("ɴᴏᴛ ѕᴛᴀʀᴛᴇᴅ").formatted(Formatting.WHITE)
                         ));
                     } else {
                         textList.add(TextHelper.concat(
-                                Text.literal("#").formatted(Formatting.GRAY),
-                                Text.literal(String.valueOf(quest.slot)).formatted(Formatting.GRAY),
-                                Text.literal(": ").formatted(Formatting.GRAY),
+                                prefix,
                                 quest.goal.TAG,
-                                Text.literal(" (").formatted(Formatting.GRAY),
+                                Text.literal(" ").formatted(Formatting.GRAY),
                                 Text.literal(String.valueOf(quest.progress)).formatted(Formatting.YELLOW),
                                 Text.literal("/").formatted(Formatting.GRAY),
-                                Text.literal(String.valueOf(quest.needed)).formatted(Formatting.WHITE),
-                                Text.literal(")").formatted(Formatting.GRAY)
+                                Text.literal(String.valueOf(quest.needed)).formatted(Formatting.WHITE)
                         ));
                     }
                 });
             }
         }
 
-        return textList;
+        // Cleaner Display: shorten the location line + simple-square tags (cached build).
+        return HudFont.applyCleanerDisplay(TextHelper.trimBlankLines(textList));
     }
 
     public Text getTitle() {

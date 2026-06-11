@@ -1,6 +1,8 @@
 package io.github.foecollab.common;
 
 import io.github.foecollab.config.FOEConfig;
+import io.github.foecollab.util.LocationNameHelper;
+import io.github.foecollab.util.SimpleTagFont;
 import net.minecraft.text.MutableText;
 import net.minecraft.text.Style;
 import net.minecraft.text.Text;
@@ -86,6 +88,21 @@ public class HudFont {
             out.add(recolor(text, base, value));
         }
         return out;
+    }
+
+    /// Applies the Cleaner Display options that make sense on a HUD line list — shortened
+    /// location names and the simple-square tag font — to {@code lines} in place. Cheap enough
+    /// to call from a handler's throttled (cached) build; do NOT call it per frame. The four
+    /// dropped variant tags aren't in {@link SimpleTagFont}, so they keep the server's glyph.
+    public static List<Text> applyCleanerDisplay(List<Text> lines) {
+        FOEConfig config = FOEConfig.getConfig();
+        if (config.cleanerDisplay.shortenLocationNames) {
+            lines.replaceAll(LocationNameHelper::shorten);
+        }
+        if (config.cleanerDisplay.simpleRankTags || config.cleanerDisplay.simpleRarityTags) {
+            lines.replaceAll(t -> SimpleTagFont.apply(t, config.cleanerDisplay.simpleRankTags, config.cleanerDisplay.simpleRarityTags));
+        }
+        return lines;
     }
 
     private static Text recolor(Text text, int base, int value) {

@@ -4,11 +4,15 @@ import io.github.foecollab.FOMC.Constant;
 import io.github.foecollab.FOMC.LevelColors;
 import io.github.foecollab.config.FOEConfig;
 import io.github.foecollab.mixin.RecipeBookScreenAccessor;
+import io.github.foecollab.screens.CustomButtonMakerScreen;
 import io.github.foecollab.screens.widget.TextWidget;
 import io.github.foecollab.screens.widget.container.ContainerButtonWidget;
 import io.github.foecollab.screens.widget.container.ContainerButtonsWidget;
 import io.github.foecollab.screens.widget.container.ContainerHeaderWidget;
 import io.github.foecollab.screens.widget.container.ContainerSideWidget;
+import io.github.foecollab.screens.widget.container.BoxRenderer;
+import io.github.foecollab.screens.widget.container.ModernBoxWidget;
+import io.github.foecollab.screens.widget.container.ModernButtonWidget;
 import io.github.foecollab.screens.widget.timer.BaitShopTimerWidget;
 import io.github.foecollab.screens.widget.timer.MoonTimerWidget;
 import io.github.foecollab.screens.widget.timer.TimerWidget;
@@ -17,13 +21,12 @@ import me.shedaniel.autoconfig.AutoConfig;
 import net.fabricmc.fabric.api.client.screen.v1.Screens;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.TextRenderer;
-import net.minecraft.client.gui.screen.ConfirmLinkScreen;
 import net.minecraft.client.gui.screen.ingame.RecipeBookScreen;
 import net.minecraft.client.gui.tooltip.Tooltip;
 import net.minecraft.client.gui.widget.ClickableWidget;
+import net.minecraft.item.ItemStack;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
-import net.minecraft.util.Util;
 import org.apache.commons.lang3.StringUtils;
 import org.jetbrains.annotations.Nullable;
 
@@ -102,7 +105,7 @@ public class InventoryScreenHandler {
 
     private void resetButtons(MinecraftClient minecraftClient) {
         if (minecraftClient.currentScreen != null) {
-            Screens.getButtons(minecraftClient.currentScreen).removeIf(clickableWidget -> clickableWidget instanceof ContainerButtonWidget || clickableWidget instanceof ContainerButtonsWidget || clickableWidget instanceof ContainerSideWidget || clickableWidget instanceof TextWidget || clickableWidget instanceof ContainerHeaderWidget || clickableWidget instanceof TimerWidget);
+            Screens.getButtons(minecraftClient.currentScreen).removeIf(clickableWidget -> clickableWidget instanceof ContainerButtonWidget || clickableWidget instanceof ContainerButtonsWidget || clickableWidget instanceof ContainerSideWidget || clickableWidget instanceof TextWidget || clickableWidget instanceof ContainerHeaderWidget || clickableWidget instanceof TimerWidget || clickableWidget instanceof ModernButtonWidget || clickableWidget instanceof ModernBoxWidget);
         }
         this.createButtonMenu(minecraftClient);
         this.createCrewMenu(minecraftClient);
@@ -179,136 +182,10 @@ public class InventoryScreenHandler {
     }
 
     private void createButtonMenu(MinecraftClient minecraftClient) {
-        if(minecraftClient.currentScreen != null && config.isButtonMenuOpen) {
-            int height = 83;
-            int buttonSize = 22 + 1;
-
-            List<ClickableWidget> clickableWidgets = new ArrayList<>();
-            // Panel first so it renders behind the buttons (z layering is gone in 1.21.11).
-            clickableWidgets.add(new ContainerButtonsWidget(minecraftClient.getWindow().getScaledWidth() / 2 - 174 / 2,  minecraftClient.getWindow().getScaledHeight() / 2 + height, Text.empty()));
-            clickableWidgets.add(assembleButton( -buttonSize * 3, 0, Text.literal("\uF018"), "artisan", Tooltip.of(
-                    TextHelper.concat(
-                            Text.literal("Artisan\n").formatted(Formatting.BOLD, Formatting.WHITE),
-                            Text.literal("The Artisan lets you upgrade your rod parts\n").formatted(Formatting.GRAY, Formatting.ITALIC),
-                            Text.literal("\n"),
-                            Text.literal("Requires atleast ").formatted(Formatting.WHITE, Formatting.ITALIC),
-                            Text.literal(Constant.ANGLER.TAG.getString()).formatted(Formatting.WHITE)
-                    )), minecraftClient));
-            clickableWidgets.add(assembleButton( -buttonSize * 2, 0, Text.literal("\uF015"), "identifier", Tooltip.of(
-                    TextHelper.concat(
-                            Text.literal("Identifier\n").formatted(Formatting.BOLD, Formatting.WHITE),
-                            Text.literal("The Identifier gives unidentified armor its quality.\n").formatted(Formatting.GRAY, Formatting.ITALIC),
-                            Text.literal("\n"),
-                            Text.literal("Requires atleast ").formatted(Formatting.WHITE, Formatting.ITALIC),
-                            Text.literal(Constant.SAILOR.TAG.getString()).formatted(Formatting.WHITE)
-                    )), minecraftClient));
-            clickableWidgets.add(assembleButton( -buttonSize * 1, 0, Text.literal("\uF013"), "forge", Tooltip.of(
-                    TextHelper.concat(
-                            Text.literal("Forge\n").formatted(Formatting.BOLD, Formatting.WHITE),
-                            Text.literal("The Forge is where you upgrade both armour tiers and supercharges tiers.\n").formatted(Formatting.GRAY, Formatting.ITALIC),
-                            Text.literal("\n"),
-                            Text.literal("Requires atleast ").formatted(Formatting.WHITE, Formatting.ITALIC),
-                            Text.literal(Constant.SAILOR.TAG.getString()).formatted(Formatting.WHITE)
-                    )), minecraftClient));
-            clickableWidgets.add(assembleButton( buttonSize * 0, 0, Text.literal("\uF020"), "scrapper", Tooltip.of(
-                    TextHelper.concat(
-                            Text.literal("Scrapper\n").formatted(Formatting.BOLD, Formatting.WHITE),
-                            Text.literal("The Scrapper lets you scrap unwanted common armor.\n").formatted(Formatting.GRAY, Formatting.ITALIC),
-                            Text.literal("\n"),
-                            Text.literal("Requires atleast ").formatted(Formatting.WHITE, Formatting.ITALIC),
-                            Text.literal(Constant.SAILOR.TAG.getString()).formatted(Formatting.WHITE)
-                    )), minecraftClient));
-            clickableWidgets.add(assembleButton( buttonSize * 1, 0, Text.literal("\uF012"), "sell", Tooltip.of(
-                    TextHelper.concat(
-                            Text.literal("Fish Merchant\n").formatted(Formatting.BOLD, Formatting.WHITE),
-                            Text.literal("The Fish Merchant is where you sell your fish.\n").formatted(Formatting.GRAY, Formatting.ITALIC),
-                            Text.literal("\n"),
-                            Text.literal("Requires atleast ").formatted(Formatting.WHITE, Formatting.ITALIC),
-                            Text.literal(Constant.MARINER.TAG.getString()).formatted(Formatting.WHITE)
-                    )), minecraftClient));
-            clickableWidgets.add(assembleButton( buttonSize * 2, 0, Text.literal("★").formatted(Formatting.YELLOW, Formatting.BOLD), "calibrator", Tooltip.of(
-                    TextHelper.concat(
-                            Text.literal("Calibrator\n").formatted(Formatting.BOLD, Formatting.WHITE),
-                            Text.literal("Calibrate your rod parts with extra stats.").formatted(Formatting.GRAY, Formatting.ITALIC),
-                            Text.literal("\n"),
-                            Text.literal("Requires atleast ").formatted(Formatting.WHITE, Formatting.ITALIC),
-                            Text.literal(Constant.MARINER.TAG.getString()).formatted(Formatting.WHITE)
-                    )), minecraftClient));
-            clickableWidgets.add(assembleButton( buttonSize * 3, 0, Text.literal("✎").formatted(Formatting.GREEN, Formatting.BOLD), "presets", Tooltip.of(
-                    TextHelper.concat(
-                            Text.literal("Presets\n").formatted(Formatting.BOLD, Formatting.WHITE),
-                            Text.literal("Presets stores your armor and rod parts.").formatted(Formatting.GRAY, Formatting.ITALIC)
-                    )), minecraftClient));
-
-            if(BossBarHandler.instance().currentLocation == Constant.CREW_ISLAND) {
-                clickableWidgets.add(assembleButton( -buttonSize * 3, buttonSize, Text.literal("\uF016"), "spawn", Tooltip.of(
-                        TextHelper.concat(
-                                Text.literal("Spawn\n").formatted(Formatting.BOLD, Formatting.WHITE),
-                                Text.literal("Return to spawn.").formatted(Formatting.GRAY, Formatting.ITALIC)
-                        )), minecraftClient));
-            } else {
-                clickableWidgets.add(assembleButton( -buttonSize * 3, buttonSize, Text.literal("\uF016"), "instances", Tooltip.of(
-                        TextHelper.concat(
-                                TextHelper.concat(Text.literal("Instances").formatted(Formatting.BOLD, Formatting.WHITE), Text.literal(" (").formatted(Formatting.DARK_GRAY), Text.literal("i" + TabHandler.instance().instance).formatted(Formatting.YELLOW), Text.literal(")\n").formatted(Formatting.DARK_GRAY)),
-                                Text.literal("The Instance Selector lets you change between instances.").formatted(Formatting.GRAY, Formatting.ITALIC)
-                        )), minecraftClient));
-            }
-            clickableWidgets.add(assembleButton( -buttonSize * 2, buttonSize, Text.literal("\uF006"), "ah", Tooltip.of(
-                    TextHelper.concat(
-                            Text.literal("Auction House\n").formatted(Formatting.BOLD, Formatting.WHITE),
-                            Text.literal("The Auction House is where you can buy and sell items to other players.").formatted(Formatting.GRAY, Formatting.ITALIC)
-                    )), minecraftClient));
-            clickableWidgets.add(assembleButton( -buttonSize * 1, buttonSize, Text.literal("\uF007"), "quest", Tooltip.of(
-                    TextHelper.concat(
-                            Text.literal("Quests\n").formatted(Formatting.BOLD, Formatting.WHITE),
-                            Text.literal("Quests are missions you activate per location that give rewards for catching fish based on size or rarity.").formatted(Formatting.GRAY, Formatting.ITALIC)
-                    )), minecraftClient));
-            clickableWidgets.add(assembleButton( buttonSize * 0, buttonSize, Text.literal("\uF005"), "pv", Tooltip.of(
-                    TextHelper.concat(
-                            Text.literal("Personal Vault\n").formatted(Formatting.BOLD, Formatting.WHITE),
-                            Text.literal("Opens your personal vault.").formatted(Formatting.GRAY, Formatting.ITALIC)
-                    )), minecraftClient));
-            clickableWidgets.add(assembleButton( buttonSize * 1, buttonSize, Text.literal("\uF039"), "turbotravel", Tooltip.of(
-                    TextHelper.concat(
-                            Text.literal("Turbo Travel\n").formatted(Formatting.BOLD, Formatting.WHITE),
-                            Text.literal("Opens the Travel Menu.\n").formatted(Formatting.GRAY, Formatting.ITALIC),
-                            Text.literal("\n"),
-                            Text.literal("Requires atleast ").formatted(Formatting.WHITE, Formatting.ITALIC),
-                            Text.literal(Constant.CAPTAIN.TAG.getString()).formatted(Formatting.WHITE)
-                    )), minecraftClient));
-            clickableWidgets.add(assembleButton( buttonSize * 2, buttonSize, Text.literal("⛏").formatted(Formatting.GOLD, Formatting.BOLD), "craft", Tooltip.of(
-                    TextHelper.concat(
-                            Text.literal("Crafting Table\n").formatted(Formatting.BOLD, Formatting.WHITE),
-                            Text.literal("Opens the crafting table.").formatted(Formatting.GRAY, Formatting.ITALIC)
-                    )), minecraftClient));
-            clickableWidgets.add(assembleUrlButton( buttonSize * 3, buttonSize, Text.literal("\uF014"), "https://wiki.fishonmc.net/", Tooltip.of(
-                    TextHelper.concat(
-                            Text.literal("Wiki\n").formatted(Formatting.BOLD, Formatting.WHITE),
-                            Text.literal("Open the official Wiki of FishOnMC.").formatted(Formatting.GRAY, Formatting.ITALIC)
-                    )), minecraftClient));
-
-            clickableWidgets.add(new ContainerButtonWidget(minecraftClient.getWindow().getScaledWidth() / 2 + 177 / 2 - 1, minecraftClient.getWindow().getScaledHeight() / 2 + 90 + 22 / 2, Text.literal("↑"), Tooltip.of(
-                    Text.literal("Close Button Menu").formatted(Formatting.BOLD, Formatting.WHITE)
-            ), button -> {
-                config.isButtonMenuOpen = false;
-                AutoConfig.getConfigHolder(FOEConfig.class).save();
-                this.resetButtons(minecraftClient);
-            }));
-
-            Screens.getButtons(minecraftClient.currentScreen).addAll(clickableWidgets);
-        } else if (minecraftClient.currentScreen != null){
-            List<ClickableWidget> clickableWidgets = new ArrayList<>();
-
-            clickableWidgets.add(new ContainerButtonWidget(minecraftClient.getWindow().getScaledWidth() / 2 - 22 / 2, minecraftClient.getWindow().getScaledHeight() / 2 + 84, Text.literal("↓"), Tooltip.of(
-                    Text.literal("Open Button Menu").formatted(Formatting.BOLD, Formatting.WHITE)
-            ), button -> {
-                config.isButtonMenuOpen = true;
-                AutoConfig.getConfigHolder(FOEConfig.class).save();
-                this.resetButtons(minecraftClient);
-            }));
-
-            Screens.getButtons(minecraftClient.currentScreen).addAll(clickableWidgets);
+        if (minecraftClient.currentScreen == null) {
+            return;
         }
+        createModernButtonMenu(minecraftClient);
     }
 
     private void createTimerMenu(MinecraftClient minecraftClient) {
@@ -456,22 +333,88 @@ public class InventoryScreenHandler {
         return clickableWidgets;
     }
 
-    private ClickableWidget assembleButton(int x, int y, Text icon, String command, @Nullable Tooltip tooltip, MinecraftClient minecraftClient) {
-        return new ContainerButtonWidget(minecraftClient.getWindow().getScaledWidth() / 2 - 22 / 2 + x, minecraftClient.getWindow().getScaledHeight() / 2 + 90 + y, icon, tooltip, button -> {
-            if (minecraftClient.player != null) {
-                minecraftClient.player.networkHandler.sendChatCommand(command);
+    private void createModernButtonMenu(MinecraftClient minecraftClient) {
+        int centerX = minecraftClient.getWindow().getScaledWidth() / 2;
+        int centerY = minecraftClient.getWindow().getScaledHeight() / 2;
+
+        List<ClickableWidget> clickableWidgets = new ArrayList<>();
+
+        if (config.isButtonMenuOpen) {
+            int perRow = 8;
+            int spacing = 20;
+            int buttonSize = 18;
+            java.util.List<InventoryButtonHandler.CustomButton> all = InventoryButtonHandler.instance().getButtons();
+            int rows = Math.max(1, (all.size() + perRow - 1) / perRow);
+
+            int panelW = 170;
+            int panelX = centerX - panelW / 2;
+            int panelTop = centerY + 78;
+            int panelH = 11 + rows * spacing;
+
+            // Panel first so it renders behind the buttons (z layering is gone in 1.21.11).
+            clickableWidgets.add(new ModernBoxWidget(panelX, panelTop, panelW, panelH, BoxRenderer.BOX));
+
+            int gridLeft = centerX - (perRow * spacing) / 2 + (spacing - buttonSize) / 2;
+            int gridTop = panelTop + 6;
+            // Position by full-list index and skip hidden buttons, so hidden "spacer" entries leave
+            // gaps in the grid — matching FOE-R's arrangement.
+            for (int i = 0; i < all.size(); i++) {
+                InventoryButtonHandler.CustomButton b = all.get(i);
+                if (!b.showButton) {
+                    continue;
+                }
+                int bx = gridLeft + (i % perRow) * spacing;
+                int by = gridTop + (i / perRow) * spacing;
+                clickableWidgets.add(assembleModernButton(b, bx, by, buttonSize, minecraftClient));
+            }
+
+            int toggleY = panelTop + panelH + 1;
+            clickableWidgets.add(new ModernButtonWidget(centerX - buttonSize - 1, toggleY, buttonSize, buttonSize, Text.literal("✎").formatted(Formatting.GREEN), Tooltip.of(
+                    Text.literal("Edit Buttons").formatted(Formatting.BOLD, Formatting.WHITE)
+            ), null, button -> minecraftClient.setScreen(new CustomButtonMakerScreen(minecraftClient.currentScreen))));
+            clickableWidgets.add(new ModernButtonWidget(centerX + 1, toggleY, buttonSize, buttonSize, Text.literal("↑"), Tooltip.of(
+                    Text.literal("Close Button Menu").formatted(Formatting.BOLD, Formatting.WHITE)
+            ), null, button -> {
+                config.isButtonMenuOpen = false;
+                AutoConfig.getConfigHolder(FOEConfig.class).save();
+                this.resetButtons(minecraftClient);
+            }));
+        } else {
+            clickableWidgets.add(new ModernButtonWidget(centerX - 9, centerY + 84, 18, 18, Text.literal("↓"), Tooltip.of(
+                    Text.literal("Open Button Menu").formatted(Formatting.BOLD, Formatting.WHITE)
+            ), null, button -> {
+                config.isButtonMenuOpen = true;
+                AutoConfig.getConfigHolder(FOEConfig.class).save();
+                this.resetButtons(minecraftClient);
+            }));
+        }
+
+        Screens.getButtons(minecraftClient.currentScreen).addAll(clickableWidgets);
+    }
+
+    private ClickableWidget assembleModernButton(InventoryButtonHandler.CustomButton button, int x, int y, int size, MinecraftClient minecraftClient) {
+        String displayName = button.name == null ? "" : button.name.replace('&', '§');
+        Tooltip tooltip;
+        if (button.description != null && !button.description.isBlank()) {
+            tooltip = Tooltip.of(TextHelper.concat(
+                    Text.literal(displayName).formatted(Formatting.BOLD, Formatting.WHITE),
+                    Text.literal("\n"),
+                    Text.literal(button.description.replace('&', '§')).formatted(Formatting.GRAY, Formatting.ITALIC)
+            ));
+        } else {
+            tooltip = Tooltip.of(Text.literal(displayName).formatted(Formatting.BOLD, Formatting.WHITE));
+        }
+
+        ItemStack itemIcon = InventoryButtonHandler.iconItem(button.icon);
+        Text iconText = Text.literal(button.icon == null ? "" : button.icon.replace('&', '§'));
+        String command = button.action == null ? "" : button.action;
+        String finalCommand = command.startsWith("/") ? command.substring(1) : command;
+
+        return new ModernButtonWidget(x, y, size, size, iconText, tooltip, itemIcon, b -> {
+            if (minecraftClient.player != null && !finalCommand.isBlank()) {
+                minecraftClient.player.networkHandler.sendChatCommand(finalCommand);
             }
         });
     }
 
-    private ClickableWidget assembleUrlButton(int x, int y, Text icon, String url, @Nullable Tooltip tooltip, MinecraftClient minecraftClient) {
-        return new ContainerButtonWidget(minecraftClient.getWindow().getScaledWidth() / 2 - 22 / 2 + x, minecraftClient.getWindow().getScaledHeight() / 2 + 90 + y, icon, tooltip, button -> minecraftClient.setScreen(new ConfirmLinkScreen((confirmed) -> {
-            if (confirmed) {
-                Util.getOperatingSystem().open(url);
-            }
-
-            minecraftClient.setScreen(null);
-        }, url, true))
-        );
-    }
 }

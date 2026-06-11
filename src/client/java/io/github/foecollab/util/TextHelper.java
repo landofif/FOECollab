@@ -34,6 +34,33 @@ public class TextHelper {
         return text;
     }
 
+    /**
+     * Cleans up the spacer lines in an assembled HUD text list: drops blank lines at the
+     * very top and bottom and collapses any run of consecutive blanks down to a single
+     * spacer. Returns a new list; the input is left untouched. A line counts as blank when
+     * its rendered string is empty or whitespace-only. This keeps intentional single-line
+     * gaps between sections while removing the dangling gaps left when a section, title or
+     * location line is toggled off.
+     */
+    public static List<Text> trimBlankLines(List<Text> lines) {
+        List<Text> out = new ArrayList<>();
+        boolean pendingBlank = false;
+        for (Text line : lines) {
+            if (line == null || line.getString().isBlank()) {
+                // Remember the gap but only emit it once a later non-blank line needs it;
+                // this drops leading/trailing blanks and collapses consecutive ones.
+                pendingBlank = !out.isEmpty();
+                continue;
+            }
+            if (pendingBlank) {
+                out.add(Text.empty());
+                pendingBlank = false;
+            }
+            out.add(line);
+        }
+        return out;
+    }
+
     // Format to string
     public static String fmt(float d) {
         return String.format(Locale.US, "%.0f", d);
@@ -81,6 +108,17 @@ public class TextHelper {
         }
     }
 
+    // Like fmnt but with no decimals: for values >= 1000 it rounds to the nearest
+    // thousand and renders "<n>K" (e.g. 1340 -> "1K", 1750 -> "2K"); smaller values are
+    // shown as-is. Used for the bait/lure stack-count overlay, where the exact count (and
+    // its "1.34K" decimals) just clutters the slot — matches FOE-R's rounded display.
+    public static String fmntRoundThousands(int value) {
+        if (value >= 1000) {
+            return Math.round(value / 1000f) + "K";
+        }
+        return String.valueOf(value);
+    }
+
     // Convert a string to small-caps / subscript glyphs (visually smaller text,
     // e.g. for compact stack counts). Digits become unicode subscripts, ASCII
     // letters become small-caps; everything else is left untouched.
@@ -125,6 +163,57 @@ public class TextHelper {
             case 'Z', 'z' -> 'ᴢ';
             default -> c;
         };
+    }
+
+    /// Inverse of {@link #smallChar}: maps a small-caps / subscript glyph back to its ASCII
+    /// letter or digit (lower-case), leaving anything else untouched.
+    public static char deSmallChar(char c) {
+        if (c >= '₀' && c <= '₉') {
+            return (char) (c - 8272); // '₀'..'₉' -> '0'..'9'
+        }
+        return switch (c) {
+            case 'ᴀ' -> 'a';
+            case 'ʙ' -> 'b';
+            case 'ᴄ' -> 'c';
+            case 'ᴅ' -> 'd';
+            case 'ᴇ' -> 'e';
+            case 'ꜰ' -> 'f';
+            case 'ɢ' -> 'g';
+            case 'ʜ' -> 'h';
+            case 'ɪ' -> 'i';
+            case 'ᴊ' -> 'j';
+            case 'ᴋ' -> 'k';
+            case 'ʟ' -> 'l';
+            case 'ᴍ' -> 'm';
+            case 'ɴ' -> 'n';
+            case 'ᴏ' -> 'o';
+            case 'ᴘ' -> 'p';
+            case 'ꞯ' -> 'q';
+            case 'ʀ' -> 'r';
+            case 'ᴛ' -> 't';
+            case 'ᴜ' -> 'u';
+            case 'ᴠ' -> 'v';
+            case 'ᴡ' -> 'w';
+            case 'ʏ' -> 'y';
+            case 'ᴢ' -> 'z';
+            case 'ѕ' -> 's'; // FishOnMC uses Cyrillic 'ѕ' (U+0455) as the small-caps 's'
+            default -> c; // small-caps 'x' already uses the ASCII glyph
+        };
+    }
+
+    /// Normalises text for loose matching against an NBT value: maps small-caps/subscript
+    /// glyphs back to ASCII, keeps only letters and digits, and lower-cases. Lets a tooltip
+    /// line be matched regardless of font (small-caps vs ASCII), casing, or separators
+    /// (spaces vs underscores).
+    public static String normalizeLoose(String s) {
+        StringBuilder sb = new StringBuilder(s.length());
+        for (int i = 0; i < s.length(); i++) {
+            char c = deSmallChar(s.charAt(i));
+            if (Character.isLetterOrDigit(c)) {
+                sb.append(Character.toLowerCase(c));
+            }
+        }
+        return sb.toString();
     }
 
     public static boolean isSmallNumber(char c) {

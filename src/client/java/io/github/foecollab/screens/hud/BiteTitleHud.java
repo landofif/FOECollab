@@ -3,47 +3,60 @@ package io.github.foecollab.screens.hud;
 import io.github.foecollab.config.FOEConfig;
 import io.github.foecollab.config.HudAlignment;
 import io.github.foecollab.handler.BiteTitleHandler;
-import io.github.foecollab.handler.FishCatchHandler;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.text.Text;
 
-/// Renders the user-configurable "bite" title (custom text + color + position). It shows the
-/// instant a fish bites and disappears the instant the fish is hooked (the rod is reeled in) —
-/// no fade either way — falling back to a short timeout if the bite is never acted on.
+/// The user-configurable "bite" title (custom text + color + position). It pops in the instant a
+/// fish bites and then disappears on its own after the configured number of seconds (no fade) —
+/// reeling in no longer clears it. The waiting-time timer is a separate HUD element
+/// ({@link BobberTimerHud}) unless mergeWithTimer is on, in which case this element shows the
+/// timer while waiting and swaps to the bite text while a fish bites.
 public class BiteTitleHud {
-    /// How long the title lingers past its configured stay time when the fish is never hooked (ms).
-    private static final long EXTRA_TIME = 750L;
-
     public void render(DrawContext drawContext, MinecraftClient client) {
+        if (client.player == null) {
+            return;
+        }
+
+        BiteTitleHandler handler = BiteTitleHandler.instance();
+
+        // While the bobber is gone, re-arm the one-shot bite guard so the next cast's first "BITE!"
+        // plays the alert sound again. The title itself is timed (below), so this no longer hides it.
+        if (client.player.fishHook == null) {
+            handler.reset();
+        }
+
         FOEConfig config = FOEConfig.getConfig();
+
+        if (biteTextVisible(config)) {
+            String textString = config.biteTitle.text;
+            if (textString == null || textString.isEmpty()) {
+                return;
+            }
+            // Stay at full opacity for the whole window, then disappear outright (no fade).
+            int color = 0xFF000000 | (config.biteTitle.textColor & 0xFFFFFF);
+            this.draw(drawContext, client, Text.literal(textString), color, config);
+        } else if (config.biteTitle.mergeWithTimer && BobberTimerHud.timerActive(client)) {
+            // Merged mode: between bites the waiting timer lives in this slot (same position and
+            // scale), with its own configurable color.
+            Text text = BobberTimerHud.timerText(config);
+            int color = 0xFF000000 | (config.biteTitle.timerColor & 0xFFFFFF);
+            this.draw(drawContext, client, text, color, config);
+        }
+    }
+
+    /// Whether the bite text's display window is currently running.
+    static boolean biteTextVisible(FOEConfig config) {
+        long biteTime = BiteTitleHandler.instance().biteTime();
+        if (biteTime == 0L) {
+            return false;
+        }
+        return System.currentTimeMillis() - biteTime < config.biteTitle.displaySeconds * 1000L;
+    }
+
+    private void draw(DrawContext drawContext, MinecraftClient client, Text text, int color, FOEConfig config) {
         TextRenderer textRenderer = client.textRenderer;
-
-        long showedAt = BiteTitleHandler.instance().showedAt;
-        if (showedAt == 0L) {
-            return;
-        }
-
-        // Vanish instantly the moment the fish is hooked: lastTimeUsedRod is stamped when the
-        // bobber is reeled in, so if that happened at/after this bite the alert is no longer needed.
-        if (FishCatchHandler.instance().lastTimeUsedRod >= showedAt) {
-            return;
-        }
-
-        long elapsed = System.currentTimeMillis() - showedAt;
-        long total = BiteTitleHandler.instance().time + EXTRA_TIME;
-        if (elapsed < 0L || elapsed > total) {
-            return;
-        }
-
-        String textString = config.biteTitle.text;
-        if (textString == null || textString.isEmpty()) {
-            return;
-        }
-
-        int color = 0xFF000000 | (config.biteTitle.textColor & 0xFFFFFF);
-        Text text = Text.literal(textString);
 
         drawContext.getMatrices().pushMatrix();
         try {
@@ -62,7 +75,8 @@ public class BiteTitleHud {
             int scaledX = (int) (baseX / scale);
             int scaledY = (int) (baseY / scale);
 
-            drawContext.drawText(textRenderer, text, alignX(config.biteTitle.alignment, scaledX, textRenderer.getWidth(text)), scaledY, color, true);
+            int x = alignX(config.biteTitle.alignment, scaledX, textRenderer.getWidth(text));
+            drawContext.drawText(textRenderer, text, x, scaledY, color, config.biteTitle.textShadow);
         } finally {
             drawContext.getMatrices().popMatrix();
         }

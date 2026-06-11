@@ -5,11 +5,14 @@ import io.github.foecollab.handler.BiteTitleHandler;
 import io.github.foecollab.handler.FishCatchHandler;
 import io.github.foecollab.handler.ItemMarkerHandler;
 import io.github.foecollab.handler.LoadingHandler;
+import io.github.foecollab.handler.NotificationSoundHandler;
 import io.github.foecollab.handler.OwnPlayerHandler;
+import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.hud.InGameHud;
 import net.minecraft.client.gui.hud.bar.Bar;
+import net.minecraft.client.gui.screen.ingame.HandledScreen;
 import net.minecraft.client.render.RenderTickCounter;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
@@ -89,7 +92,17 @@ public class InGameHudMixin {
         if(LoadingHandler.instance().isOnServer) {
             FishCatchHandler.instance().catchTitle(title);
             if(config.biteTitle.enabled && title != null && Objects.equals(title.getString(), "BITE!")) {
-                BiteTitleHandler.instance().trigger();
+                // The server re-sends "BITE!" while one fish is on the line, but a "BITE!" arriving
+                // after the previous one already expired is a *new* fish biting the same cast —
+                // re-arm so every bite pops the notification (and sound) again, not just the first.
+                boolean sameBiteOngoing = this.title != null && this.titleRemainTicks > 0
+                        && Objects.equals(this.title.getString(), "BITE!");
+                if(!sameBiteOngoing) {
+                    BiteTitleHandler.instance().reset();
+                }
+                if(BiteTitleHandler.instance().trigger() && config.biteTitle.playSound) {
+                    NotificationSoundHandler.instance().playSoundWarning(config.biteTitle.soundType, MinecraftClient.getInstance(), config.biteTitle.volume / 100f);
+                }
             }
         }
     }
@@ -108,6 +121,19 @@ public class InGameHudMixin {
         }
     }
 
+    // Server GUIs report click results in the action bar (e.g. the sell menu posts each fish's
+    // sale price). Besides being noise behind the menu, a fresh overlay reads as "reel-in
+    // minigame running" to BobberTimerHud, hiding the bobber timer mid-wait. No overlay the
+    // player cares about can start while a container screen is open (reeling needs the rod in
+    // hand), so drop these instead of letting them set overlayRemaining.
+    @Inject(method = "setOverlayMessage", at = @At("HEAD"), cancellable = true)
+    private void injectSetOverlayMessage(Text message, boolean tinted, CallbackInfo ci) {
+        if(LoadingHandler.instance().isOnServer
+                && MinecraftClient.getInstance().currentScreen instanceof HandledScreen<?>) {
+            ci.cancel();
+        }
+    }
+
     @Inject(method = "renderMainHud", at = @At("HEAD"), cancellable = true)
     private void injectRenderMainHud(DrawContext context, RenderTickCounter tickCounter, CallbackInfo ci) {
         if(LoadingHandler.instance().isOnServer && config.fun.immersionMode && System.currentTimeMillis() - OwnPlayerHandler.instance().changedSlotTime > 5000L) {
@@ -122,12 +148,45 @@ public class InGameHudMixin {
         }
     }
 
+    @Inject(method = "renderHealthBar", at = @At("HEAD"), cancellable = true)
+    private void injectRenderHealthBar(DrawContext context, PlayerEntity player, int x, int y, int lines, int regeneratingHeartIndex, float maxHealth, int lastHealth, int health, int absorption, boolean blinking, CallbackInfo ci) {
+        if(config.hideHealthAndHunger && LoadingHandler.instance().isOnServer) {
+            ci.cancel();
+        }
+    }
+
+    @Inject(method = "renderFood", at = @At("HEAD"), cancellable = true)
+    private void injectRenderFood(DrawContext context, PlayerEntity player, int top, int right, CallbackInfo ci) {
+        if(config.hideHealthAndHunger && LoadingHandler.instance().isOnServer) {
+            ci.cancel();
+        }
+    }
+
+    @Inject(method = "renderAirBubbles", at = @At("HEAD"), cancellable = true)
+    private void injectRenderAirBubbles(DrawContext context, PlayerEntity player, int heartCount, int top, int left, CallbackInfo ci) {
+        if(config.hideHealthAndHunger && LoadingHandler.instance().isOnServer) {
+            ci.cancel();
+        }
+    }
+
     // HEAD, not TAIL: the equipped-pet highlight must draw behind the hotbar item
     // (it used z=100 before 1.21.11 dropped the matrix z axis).
     @Inject(method = "renderHotbarItem", at = @At("HEAD"))
     private void injectDrawHotbarItem(DrawContext context, int x, int y, RenderTickCounter tickCounter, PlayerEntity player, ItemStack stack, int seed, CallbackInfo ci) {
         if(LoadingHandler.instance().isOnServer && LoadingHandler.instance().isLoadingDone) {
             ItemMarkerHandler.instance().renderHotBarSelectedPet(context, x, y, stack);
+        }
+    }
+
+    // TAIL: the rarity / fish-size / pet / max-stat / armor-quality markers draw on TOP of the
+    // hotbar item, mirroring the inventory slot markers (drawSlot TAIL).
+    @Inject(method = "renderHotbarItem", at = @At("TAIL"))
+    private void injectDrawHotbarItemMarkers(DrawContext context, int x, int y, RenderTickCounter tickCounter, PlayerEntity player, ItemStack stack, int seed, CallbackInfo ci) {
+        if(LoadingHandler.instance().isOnServer && LoadingHandler.instance().isLoadingDone
+                && config.itemMarker.itemSlotMarker.showItemMarker
+                && config.itemMarker.itemSlotMarker.showHotbarMarkers
+                && !stack.isEmpty()) {
+            ItemMarkerHandler.instance().renderItemMarker(context, stack, x, y);
         }
     }
 }

@@ -82,7 +82,7 @@ public class DailyQuestTrackerHudHandler {
             }
         }
 
-        return textList;
+        return TextHelper.trimBlankLines(textList);
     }
 
     public Text getTitle() {

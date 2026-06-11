@@ -53,8 +53,8 @@ public class PlayerListHudMixin {
         }
 
         Text result = text;
-        if (config.cleanerDisplay.simpleTags && LoadingHandler.instance().isOnServer) {
-            result = SimpleTagFont.apply(result);
+        if ((config.cleanerDisplay.simpleRankTags || config.cleanerDisplay.simpleRarityTags) && LoadingHandler.instance().isOnServer) {
+            result = SimpleTagFont.apply(result, config.cleanerDisplay.simpleRankTags, config.cleanerDisplay.simpleRarityTags);
         }
         cir.setReturnValue(result);
     }

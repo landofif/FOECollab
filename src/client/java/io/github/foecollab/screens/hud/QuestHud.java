@@ -89,12 +89,14 @@ public class QuestHud {
                     drawContext.drawGuiTexture(RenderPipelines.GUI_TEXTURED,   theme.GUI_TOP, scaledX + padding - rightAlignmentOffset, scaledY - padding - heightClampTranslation, maxLength, 16, alphaOverlay | colorOverlay);
                     drawContext.drawGuiTexture(RenderPipelines.GUI_TEXTURED,   theme.GUI_BOTTOM, scaledX + padding - rightAlignmentOffset, scaledY + padding * 2 + ((textList.size() - 1) * lineHeight) - heightClampTranslation, maxLength, 16, alphaOverlay | colorOverlay);
 
-                    // Title
-                    Text title = QuestTrackerHudHandler.instance().getTitle().copy().withColor(ThemingHandler.instance().currentThemeType.TEXT_COLOR);
-                    drawContext.drawGuiTexture(RenderPipelines.GUI_TEXTURED,   theme.GUI_TEXT_LEFT, scaledX + (maxLength + padding * 2) / 2 - textRenderer.getWidth(title) / 2 - 16 - rightAlignmentOffset, scaledY - padding - heightClampTranslation, 16, 16, alphaOverlay | colorOverlay);
-                    drawContext.drawGuiTexture(RenderPipelines.GUI_TEXTURED,   theme.GUI_TEXT_MIDDLE, scaledX  + (maxLength + padding * 2) / 2 - textRenderer.getWidth(title) / 2 - rightAlignmentOffset, scaledY - padding - heightClampTranslation, textRenderer.getWidth(title), 16, alphaOverlay | colorOverlay);
-                    drawContext.drawGuiTexture(RenderPipelines.GUI_TEXTURED,   theme.GUI_TEXT_RIGHT, scaledX + (maxLength + padding * 2) / 2 + textRenderer.getWidth(title) / 2 - rightAlignmentOffset, scaledY - padding - heightClampTranslation, 16, 16, alphaOverlay | colorOverlay);
-                    drawContext.drawText(textRenderer, title, scaledX + (maxLength + padding * 2) / 2 - textRenderer.getWidth(title) / 2 - rightAlignmentOffset, scaledY - textRenderer.fontHeight / 2 - heightClampTranslation - 1, themeTextColor, false);
+                    // Title (skipped when hidden so only a clean top border remains)
+                    if (!config.questTracker.hideTitle) {
+                        Text title = QuestTrackerHudHandler.instance().getTitle().copy().withColor(ThemingHandler.instance().currentThemeType.TEXT_COLOR);
+                        drawContext.drawGuiTexture(RenderPipelines.GUI_TEXTURED,   theme.GUI_TEXT_LEFT, scaledX + (maxLength + padding * 2) / 2 - textRenderer.getWidth(title) / 2 - 16 - rightAlignmentOffset, scaledY - padding - heightClampTranslation, 16, 16, alphaOverlay | colorOverlay);
+                        drawContext.drawGuiTexture(RenderPipelines.GUI_TEXTURED,   theme.GUI_TEXT_MIDDLE, scaledX  + (maxLength + padding * 2) / 2 - textRenderer.getWidth(title) / 2 - rightAlignmentOffset, scaledY - padding - heightClampTranslation, textRenderer.getWidth(title), 16, alphaOverlay | colorOverlay);
+                        drawContext.drawGuiTexture(RenderPipelines.GUI_TEXTURED,   theme.GUI_TEXT_RIGHT, scaledX + (maxLength + padding * 2) / 2 + textRenderer.getWidth(title) / 2 - rightAlignmentOffset, scaledY - padding - heightClampTranslation, 16, 16, alphaOverlay | colorOverlay);
+                        drawContext.drawText(textRenderer, title, scaledX + (maxLength + padding * 2) / 2 - textRenderer.getWidth(title) / 2 - rightAlignmentOffset, scaledY - textRenderer.fontHeight / 2 - heightClampTranslation - 1, themeTextColor, false);
+                    }
                 }
 
                 // Flair

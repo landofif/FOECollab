@@ -15,6 +15,10 @@ public class ContainerButtonsWidget extends ClickableWidget {
         super(x, y, 174, 59, message);
     }
 
+    public ContainerButtonsWidget(int x, int y, int width, int height, Text message) {
+        super(x, y, width, height, message);
+    }
+
     @Override
     protected void renderWidget(DrawContext context, int mouseX, int mouseY, float delta) {
         context.drawGuiTexture( RenderPipelines.GUI_TEXTURED, panelTexture, this.getX(), this.getY(), this.width, this.height);

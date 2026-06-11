@@ -6,6 +6,7 @@ import io.github.foecollab.config.FOEConfig;
 import io.github.foecollab.config.TrackerContestHUDConfig;
 import io.github.foecollab.handler.BossBarHandler;
 import io.github.foecollab.handler.ContestHandler;
+import io.github.foecollab.util.LocationNameHelper;
 import io.github.foecollab.util.TextHelper;
 import io.github.foecollab.util.ThrottledCache;
 import net.minecraft.client.MinecraftClient;
@@ -44,11 +45,11 @@ public class ContestHudHandler {
         long lastUpdatedMinutes = TimeUnit.MILLISECONDS.toMinutes(timeAgo) % 60;
         long lastUpdatedSeconds = TimeUnit.MILLISECONDS.toSeconds(timeAgo) % 60;
 
-        Text location = Constant.valueOfTag(ContestHandler.instance().location) != null
+        Text location = LocationNameHelper.shorten(Constant.valueOfTag(ContestHandler.instance().location) != null
                 ? Objects.requireNonNull(Constant.valueOfTag(ContestHandler.instance().location)) == Constant.SPAWNHUB
                         ? Constant.CYPRESS_LAKE.TAG
                         : Constant.valueOfTag(ContestHandler.instance().location).TAG
-                : Text.literal(ContestHandler.instance().location).formatted(Formatting.WHITE);
+                : Text.literal(ContestHandler.instance().location).formatted(Formatting.WHITE));
 
         // todo: make code more pretty here
         if (!config.contestTracker.useOldContestHUD) {
@@ -348,7 +349,7 @@ public class ContestHudHandler {
                                 .formatted(Formatting.GREEN)));
             }
 
-            return textList;
+            return TextHelper.trimBlankLines(textList);
         } else {
             if (!ContestHandler.instance().isReset) {
                 if (ContestHandler.instance().isContest) {
@@ -437,7 +438,7 @@ public class ContestHudHandler {
                                 .formatted(Formatting.GREEN)));
             }
 
-            return textList;
+            return TextHelper.trimBlankLines(textList);
         }
     }
 }

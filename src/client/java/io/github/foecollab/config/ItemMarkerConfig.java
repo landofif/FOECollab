@@ -18,6 +18,7 @@ public class ItemMarkerConfig {
             public boolean showPetItemEquippedMarker = true;
             public boolean showMaxPetStatsMarker = true;
             public boolean showArmorQualityMarker = true;
+            public boolean showHotbarMarkers = true;
         }
 
         @ConfigEntry.Gui.CollapsibleObject

@@ -10,7 +10,7 @@
 	"contact": {
 		"sources": "https://github.com/FOECollab/FOE-Collab"
 	},
-	"license": "GPL-3.0",
+	"license": "AGPL-3.0-only",
 	"icon": "assets/foecollab/icon.png",
 	"environment": "client",
 	"entrypoints": {

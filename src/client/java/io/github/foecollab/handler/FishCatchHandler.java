@@ -5,6 +5,7 @@ import io.github.foecollab.FOMC.Constant;
 import io.github.foecollab.FOMC.Types.Fish;
 import io.github.foecollab.config.FOEConfig;
 import io.github.foecollab.handler.packet.PacketHandler;
+import io.github.foecollab.util.SimpleTagFont;
 import io.github.foecollab.util.TextHelper;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.entity.Entity;
@@ -219,9 +220,13 @@ public class FishCatchHandler {
 			boolean notTracked = !trackFishList.contains(fish.id);
 			boolean subtitleMatches = subtitle.contains(stackName);
 
-			FOECollab.LOGGER.info(
-					"[FoE] Found fish: {} (variant: {}) - catcher: {}, notTracked: {}, subtitleMatch: {} (subtitle: '{}' contains name: '{}')",
-					stackName, fish.variant.ID, catcherMatches, notTracked, subtitleMatches, subtitle, stackName);
+			// Diagnostic only — this runs for every fish stack in the inventory on every
+			// tick of the catch window, so keep it at debug to avoid log/CPU spam while grinding.
+			if (FOECollab.LOGGER.isDebugEnabled()) {
+				FOECollab.LOGGER.debug(
+						"[FoE] Found fish: {} (variant: {}) - catcher: {}, notTracked: {}, subtitleMatch: {} (subtitle: '{}' contains name: '{}')",
+						stackName, fish.variant.ID, catcherMatches, notTracked, subtitleMatches, subtitle, stackName);
+			}
 		}
 		if (fish != null
 				&& minecraftClient.player != null
@@ -306,29 +311,35 @@ public class FishCatchHandler {
 		List<Text> title = new ArrayList<>();
 		title.add(icon.copy().formatted(Formatting.WHITE));
 		title.add(Text.empty());
-		title.add(name);
+		// Render the rarity tag as the compact first-letter square, matching chat/tab/tooltips
+		// (only when "Simplified tag icons" is on, otherwise keep the server's original glyph).
+		title.add(SimpleTagFont.apply(name, config.cleanerDisplay.simpleRankTags, config.cleanerDisplay.simpleRarityTags));
 		title.add(fish.size.TAG);
 		if (FullInventoryHandler.instance().slotsLeft == 0) {
 			title.add(Text.literal("Inventory Full!").formatted(Formatting.RED));
 		}
 		List<Text> subtitle = new ArrayList<>();
 		if (config.fishTracker.fishTrackerToggles.otherToggles.showStatsOnCatch) {
-			subtitle.add(Text.literal("ᴡᴇɪɢʜᴛ").formatted(Formatting.BOLD).withColor(0xFFFFFF));
-			subtitle.add(TextHelper.concat(
-					Text.literal(TextHelper.fmt(fish.weight, 2)),
-					Text.literal("ʟʙ").withColor(0xAAAAAA),
-					Text.literal(" (").withColor(0x555555),
-					Text.literal(TextHelper.fmt(fish.weight * 0.453592f, 2)),
-					Text.literal("ᴋɢ").withColor(0xAAAAAA),
-					Text.literal(")").withColor(0x555555)).withColor(0xFFFFFF));
-			subtitle.add(Text.literal("ʟᴇɴɢᴛʜ").formatted(Formatting.BOLD).withColor(0xFFFFFF));
-			subtitle.add(TextHelper.concat(
-					Text.literal(TextHelper.fmt(fish.length, 2)),
-					Text.literal("ɪɴ").withColor(0xAAAAAA),
-					Text.literal(" (").withColor(0x555555),
-					Text.literal(TextHelper.fmt(fish.length * 2.54f, 2)),
-					Text.literal("ᴄᴍ").withColor(0xAAAAAA),
-					Text.literal(")").withColor(0x555555)).withColor(0xFFFFFF));
+			if (config.titlePopup.showWeight) {
+				subtitle.add(Text.literal("ᴡᴇɪɢʜᴛ").formatted(Formatting.BOLD).withColor(0xFFFFFF));
+				subtitle.add(TextHelper.concat(
+						Text.literal(TextHelper.fmt(fish.weight, 2)),
+						Text.literal("ʟʙ").withColor(0xAAAAAA),
+						Text.literal(" (").withColor(0x555555),
+						Text.literal(TextHelper.fmt(fish.weight * 0.453592f, 2)),
+						Text.literal("ᴋɢ").withColor(0xAAAAAA),
+						Text.literal(")").withColor(0x555555)).withColor(0xFFFFFF));
+			}
+			if (config.titlePopup.showLength) {
+				subtitle.add(Text.literal("ʟᴇɴɢᴛʜ").formatted(Formatting.BOLD).withColor(0xFFFFFF));
+				subtitle.add(TextHelper.concat(
+						Text.literal(TextHelper.fmt(fish.length, 2)),
+						Text.literal("ɪɴ").withColor(0xAAAAAA),
+						Text.literal(" (").withColor(0x555555),
+						Text.literal(TextHelper.fmt(fish.length * 2.54f, 2)),
+						Text.literal("ᴄᴍ").withColor(0xAAAAAA),
+						Text.literal(")").withColor(0x555555)).withColor(0xFFFFFF));
+			}
 		}
 
 		TitleHandler.instance().setTitleHud(title,

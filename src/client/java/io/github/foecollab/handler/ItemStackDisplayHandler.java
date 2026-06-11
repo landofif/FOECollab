@@ -34,11 +34,15 @@ public class ItemStackDisplayHandler {
             // Respect counts the game forced (recipe book, creative, ...); just restyle them.
             text = countOverride;
         } else {
-            int count = getDisplayCount(stack, config);
-            if (count <= 1) {
+            DisplayCount displayCount = getDisplayCount(stack, config);
+            if (displayCount.count() <= 1) {
                 return; // matches vanilla: nothing is drawn for a single item
             }
-            text = TextHelper.fmnt(count);
+            // Bait/lure counts run into the thousands, so round them to the nearest "K"
+            // instead of showing "1.34K"; ordinary stacks keep their exact (small) count.
+            text = displayCount.isBait()
+                    ? TextHelper.fmntRoundThousands(displayCount.count())
+                    : TextHelper.fmnt(displayCount.count());
         }
 
         String display = small ? TextHelper.smallCaps(text) : text;
@@ -53,7 +57,11 @@ public class ItemStackDisplayHandler {
         }
     }
 
-    private int getDisplayCount(ItemStack stack, FOEConfig config) {
+    /// The count to draw, and whether it came from a FoE bait/lure {@code counter} (which
+    /// reaches the thousands and so gets the rounded "K" display) rather than a plain stack.
+    private record DisplayCount(int count, boolean isBait) {}
+
+    private DisplayCount getDisplayCount(ItemStack stack, FOEConfig config) {
         // contains(...) is a cheap component-map lookup; only FoE items carry custom
         // data, so this skips the (deep-copying) getNbt() call for vanilla items — this
         // runs for every rendered slot every frame, so the early-out matters.
@@ -63,11 +71,11 @@ public class ItemStackDisplayHandler {
             if (nbt != null) {
                 String type = nbt.getString("type").orElse("");
                 if (Objects.equals(type, Defaults.ItemTypes.BAIT) || Objects.equals(type, Defaults.ItemTypes.LURE)) {
-                    return nbt.getInt("counter").orElse(stack.getCount());
+                    return new DisplayCount(nbt.getInt("counter").orElse(stack.getCount()), true);
                 }
             }
         }
-        return stack.getCount();
+        return new DisplayCount(stack.getCount(), false);
     }
 
     /// Draws an already-small-capped string glyph-by-glyph, nudging each glyph so the

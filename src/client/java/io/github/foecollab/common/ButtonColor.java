@@ -3,10 +3,11 @@ package io.github.foecollab.common;
 import io.github.foecollab.config.FOEConfig;
 
 /**
- * Tint color applied to the inventory menu buttons ({@code ContainerButtonWidget}).
- * Mirrors the HUD font palette ({@link HudFont.FontColor}) and adds plain white / black.
- * The button textures are near-white, so the tint is multiplied onto them: {@code OFF} and
- * {@code WHITE} both leave the default look, {@code BLACK} darkens it, and the rest recolor it.
+ * Tint color applied to the inventory menu buttons ({@code ContainerButtonWidget} /
+ * {@code ModernButtonWidget}). Mirrors the HUD font palette ({@link HudFont.FontColor}) and adds
+ * plain white / black. The tint is multiplied onto the dark box textures, so colors come out
+ * muted: {@code OFF} and {@code WHITE} both leave the default look, {@code BLACK} darkens it,
+ * and the rest recolor it.
  */
 public enum ButtonColor {
     OFF(0xFFFFFF),

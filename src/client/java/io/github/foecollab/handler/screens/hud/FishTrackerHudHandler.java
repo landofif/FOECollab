@@ -1,6 +1,7 @@
 package io.github.foecollab.handler.screens.hud;
 
 import io.github.foecollab.FOMC.Constant;
+import io.github.foecollab.common.HudFont;
 import io.github.foecollab.common.Theming;
 import io.github.foecollab.config.FOEConfig;
 import io.github.foecollab.handler.ProfileDataHandler;
@@ -127,7 +128,7 @@ public class FishTrackerHudHandler {
 
         int displayTimerFishCaughtCount = profileData.timerFishCaughtCount;
 
-        if (ThemingHandler.instance().currentThemeType == Theming.ThemeType.OFF) {
+        if (!config.fishTracker.hideTitle && ThemingHandler.instance().currentThemeType == Theming.ThemeType.OFF) {
             if(config.fishTracker.rightAlignment) {
                 textList.add(TextHelper.concat(
                         this.getTitle().copy().formatted(Formatting.GRAY),
@@ -384,7 +385,9 @@ public class FishTrackerHudHandler {
             }
         }
 
-        return textList;
+        // Cleaner Display (simple-square rarity tags + shortened location names), applied here
+        // in the cached build — not per frame, which is what made the old global mixin laggy.
+        return HudFont.applyCleanerDisplay(TextHelper.trimBlankLines(textList));
     }
 
     public Text getTitle() {

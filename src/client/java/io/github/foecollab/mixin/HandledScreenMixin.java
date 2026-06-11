@@ -2,6 +2,7 @@ package io.github.foecollab.mixin;
 
 import io.github.foecollab.handler.ItemMarkerHandler;
 import io.github.foecollab.handler.LoadingHandler;
+import io.github.foecollab.handler.QuestMenuSquareHandler;
 import io.github.foecollab.handler.SearchBarContainerHandler;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.ingame.HandledScreen;
@@ -24,6 +25,14 @@ public abstract class HandledScreenMixin {
     private void injectDrawSlotBackground(DrawContext context, Slot slot, int x, int y, CallbackInfo ci) {
         if(LoadingHandler.instance().isOnServer) {
             ItemMarkerHandler.instance().renderItemMarkerBackground(context, slot);
+        }
+    }
+
+    @Inject(method = "drawSlot", at = @At("HEAD"), cancellable = true)
+    private void injectDrawSlotQuestSquare(DrawContext context, Slot slot, int x, int y, CallbackInfo ci) {
+        if (QuestMenuSquareHandler.instance().isSquaredSlot(slot)) {
+            QuestMenuSquareHandler.instance().render(context, slot);
+            ci.cancel();
         }
     }
 

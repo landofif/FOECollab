@@ -2,6 +2,7 @@ package io.github.foecollab.handler.screens.hud;
 
 import io.github.foecollab.FOMC.Constant;
 import io.github.foecollab.FOMC.Types.Pet;
+import io.github.foecollab.common.HudFont;
 import io.github.foecollab.config.FOEConfig;
 import io.github.foecollab.handler.PetEquipHandler;
 import io.github.foecollab.handler.ProfileDataHandler;
@@ -141,12 +142,14 @@ public class PetEquipHudHandler {
             textList.add(Text.empty());
         }
 
-        return textList;
+        // Cleaner Display: render the pet rarity/rating glyphs as simple-square tags (cached build).
+        return HudFont.applyCleanerDisplay(TextHelper.trimBlankLines(textList));
     }
 
     public enum XpDisplayType {
         ALL,
-        SHORT
+        SHORT,
+        OFF
     }
 
     public enum RatingDisplayType {

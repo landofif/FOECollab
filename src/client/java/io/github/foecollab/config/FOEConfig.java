@@ -90,6 +90,17 @@ public class FOEConfig implements ConfigData {
     @ConfigEntry.Gui.Tooltip
     public boolean muteAdvancementSound = true;
 
+    // Mouse-wheel hotbar slot cycling while in game (chat/menu scrolling is never affected).
+    @ConfigEntry.Category(value = OTHER)
+    public boolean hotbarScrolling = false;
+
+    @ConfigEntry.Category(value = OTHER)
+    public boolean hideHealthAndHunger = false;
+
+    @ConfigEntry.Category(value = OTHER)
+    @ConfigEntry.Gui.Tooltip
+    public boolean loadServerPackLocally = false;
+
     @ConfigEntry.Category(value = OTHER)
     @ConfigEntry.Gui.CollapsibleObject
     public TooltipShortenerConfig.CleanerDisplay cleanerDisplay = new TooltipShortenerConfig.CleanerDisplay();

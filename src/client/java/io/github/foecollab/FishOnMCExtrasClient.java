@@ -19,7 +19,8 @@ import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.item.v1.ItemTooltipCallback;
 import net.fabricmc.fabric.api.client.message.v1.ClientReceiveMessageEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
-import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
+import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry;
+import net.fabricmc.fabric.api.client.rendering.v1.hud.VanillaHudElements;
 import net.fabricmc.fabric.api.client.screen.v1.ScreenEvents;
 import net.fabricmc.fabric.api.client.screen.v1.Screens;
 import net.fabricmc.fabric.api.networking.v1.PacketSender;
@@ -37,6 +38,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.item.tooltip.TooltipType;
 import net.minecraft.text.Text;
+import net.minecraft.util.Identifier;
 
 import java.util.List;
 import java.util.Objects;
@@ -54,6 +56,9 @@ public class FishOnMCExtrasClient implements ClientModInitializer {
         AutoConfig.register(FOEConfig.class, GsonConfigSerializer::new);
         CONFIG = AutoConfig.getConfigHolder(FOEConfig.class).getConfig();
         CommandRegistry.initialize();
+        // Before MinecraftClient scans resource packs: mirror the cached server packs so they
+        // load at startup (the join-time pack push is then skipped, see ServerPackHandler).
+        ServerPackHandler.instance().extract();
         KeybindHandler.instance().init();
         PacketHandler.instance().addHandlers();
 
@@ -67,7 +72,10 @@ public class FishOnMCExtrasClient implements ClientModInitializer {
         ScreenEvents.AFTER_INIT.register(this::afterScreenInit);
         ClientEntityEvents.ENTITY_LOAD.register(this::onEntityLoad);
 
-        HudRenderCallback.EVENT.register(MAIN_HUD_RENDERER);
+        // Attach just below the vanilla player list so holding tab layers it over our HUDs
+        // instead of hiding them.
+        HudElementRegistry.attachElementBefore(VanillaHudElements.PLAYER_LIST,
+                Identifier.of("foecollab", "main_hud"), MAIN_HUD_RENDERER);
     }
 
     private void onEntityLoad(Entity entity, ClientWorld clientWorld) {
@@ -233,8 +241,8 @@ public class FishOnMCExtrasClient implements ClientModInitializer {
                     && text.getString().stripLeading().startsWith("LOCATION")) {
                 text = LocationNameHelper.shorten(text);
             }
-            if (CONFIG.cleanerDisplay.simpleTags) {
-                text = SimpleTagFont.apply(text);
+            if (CONFIG.cleanerDisplay.simpleRankTags || CONFIG.cleanerDisplay.simpleRarityTags) {
+                text = SimpleTagFont.apply(text, CONFIG.cleanerDisplay.simpleRankTags, CONFIG.cleanerDisplay.simpleRarityTags);
             }
         }
         return text;
@@ -254,9 +262,9 @@ public class FishOnMCExtrasClient implements ClientModInitializer {
             ArmorHandler.instance().appendTooltip(textList, itemStack);
             FishingStatsHandler.instance().appendTooltip(textList, itemStack);
             AuctionHandler.instance().appendTooltip(textList, itemStack);
-            // Must run last: it removes/edits lines, which would break the fixed
+            // Must run last: it edits lines, which would break the fixed
             // line indices the handlers above rely on.
-            TooltipShortenerHandler.instance().cleanTooltip(textList, itemStack);
+            TooltipShortenerHandler.instance().cleanTooltip(textList);
         }
     }
 

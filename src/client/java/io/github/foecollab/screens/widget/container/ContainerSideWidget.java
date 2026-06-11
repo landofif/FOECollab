@@ -1,23 +1,18 @@
 package io.github.foecollab.screens.widget.container;
 
-import io.github.foecollab.FOECollab;
-import net.minecraft.client.gl.RenderPipelines;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.narration.NarrationMessageBuilder;
 import net.minecraft.client.gui.widget.ClickableWidget;
 import net.minecraft.text.Text;
-import net.minecraft.util.Identifier;
 
 public class ContainerSideWidget extends ClickableWidget {
-    private final Identifier panelTexture = Identifier.of(FOECollab.MOD_ID, "containers/panel_crew");
-
     public ContainerSideWidget(int x, int y, Text message) {
         super(x, y, 105, 164, message);
     }
 
     @Override
     protected void renderWidget(DrawContext context, int mouseX, int mouseY, float delta) {
-        context.drawGuiTexture( RenderPipelines.GUI_TEXTURED, panelTexture, this.getX(), this.getY(), this.width, this.height);
+        BoxRenderer.draw(context, BoxRenderer.BOX, this.getX(), this.getY(), this.width, this.height);
     }
 
     @Override

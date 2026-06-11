@@ -5,14 +5,16 @@ import io.github.foecollab.config.ConfigConstants;
 import io.github.foecollab.config.FOEConfig;
 import io.github.foecollab.handler.BossBarHandler;
 import io.github.foecollab.handler.LoadingHandler;
-import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
+import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElement;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.render.RenderTickCounter;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
 
-public class MainHudRenderer implements HudRenderCallback {
+/// Registered via HudElementRegistry just before the vanilla player list, so all mod HUDs keep
+/// rendering while tab is held and the player list simply layers on top of them.
+public class MainHudRenderer implements HudElement {
     final FishTrackerHud fishTrackerHud = new FishTrackerHud();
     final PetEquipHud petEquipHud = new PetEquipHud();
     final NotificationHud notificationHud = new NotificationHud();
@@ -29,7 +31,7 @@ public class MainHudRenderer implements HudRenderCallback {
     final DailyQuestHud dailyQuestHud = new DailyQuestHud();
 
     @Override
-    public void onHudRender(DrawContext drawContext, RenderTickCounter renderTickCounter) {
+    public void render(DrawContext drawContext, RenderTickCounter renderTickCounter) {
         FOEConfig config = FOEConfig.getConfig();
         if(!MinecraftClient.getInstance().options.hudHidden && LoadingHandler.instance().isOnServer && LoadingHandler.instance().isLoadingDone) {
             this.notificationHud.render(drawContext, MinecraftClient.getInstance());
@@ -43,7 +45,10 @@ public class MainHudRenderer implements HudRenderCallback {
                     this.biteTitleHud.render(drawContext, MinecraftClient.getInstance());
                 }
 
-                this.bobberTimerHud.render(drawContext, MinecraftClient.getInstance());
+                // When merged, BiteTitleHud draws the timer in its slot instead.
+                if(!(config.biteTitle.enabled && config.biteTitle.mergeWithTimer)) {
+                    this.bobberTimerHud.render(drawContext, MinecraftClient.getInstance());
+                }
 
                 if(config.itemFrameTooltip.showTooltip) {
                     this.itemFrameTooltipHud.render(drawContext, MinecraftClient.getInstance());

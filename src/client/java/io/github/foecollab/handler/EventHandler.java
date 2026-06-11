@@ -109,9 +109,12 @@ public class EventHandler {
                         // FOECollab.LOGGER.info("Parsed hour: " + parsedHour);
                         // FOECollab.LOGGER.info("Is witching hour: " + isWitchingHour);
 
-                        // Convetr to 24hour for offset implementation
+                        // Convert to 24 hour for offset implementation
                         Integer currentHour = normHour(parsedHour, timeSuffix);
-                        int startHour = Math.floorMod(1 - offsetHours, 24);
+                        // Witching Hour runs 12 AM–3 AM (hours 0–2); anchor the window on midnight so
+                        // offset 0 starts it at 12 AM. (Was 1 - offset, which skipped midnight and
+                        // started at 1 AM.) normHour maps 12 AM→0 and 12 PM→12, so noon is never in range.
+                        int startHour = Math.floorMod(-offsetHours, 24);
                         boolean isInRange = currentHour != null
                                         && (startHour <= 3 ? currentHour >= startHour && currentHour < 3
                                                         : currentHour >= startHour || currentHour < 3);

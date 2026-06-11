@@ -27,13 +27,22 @@ public class MovableBoxWidget extends ClickableWidget {
     private final int maxLength;
     private final int minFontSize;
     private final int maxFontSize;
+    /// Pixels reserved at the very top of the screen (the editor's bar-label strip). Drag bounds
+    /// never let an element above this; 0 when the top bar is hidden so elements can use that space.
+    private final int topReserved;
+    /// Extra on-screen scale factor for elements drawn larger than their stored {@code fontSize}
+    /// would imply (the title/bite popups render at 2x their slider), so the box matches them.
+    private final float scaleMultiplier;
+    /// Minimum number of box pixels kept on-screen so a box dragged toward an edge stays grabbable.
+    private static final int GRAB_MARGIN = 16;
 
     private float scale;
     private int fontSize;
-    private int minWidth;
-    private int maxWidth;
-    private int minHeight;
-    private int maxHeight;
+    private int anchorOffsetX; // distance from the box's left edge to the anchored point
+    private int xMin;
+    private int xMax;
+    private int yMin;
+    private int yMax;
 
     private double deltaX = 0;
     private double deltaY = 0;
@@ -42,7 +51,7 @@ public class MovableBoxWidget extends ClickableWidget {
     private int xPercent;
     private int yPercent;
 
-    public MovableBoxWidget(TextRenderer textRenderer, int xPercent, int yPercent, Alignment alignment, Text text, int fontSize, int minFontSize, int maxFontSize, int lines, int maxLength, CallbackCoordinates callbackCoordinates, CallbackFontSize callbackFontSize) {
+    public MovableBoxWidget(TextRenderer textRenderer, int xPercent, int yPercent, Alignment alignment, Text text, int fontSize, int minFontSize, int maxFontSize, int lines, int maxLength, int topReserved, float scaleMultiplier, CallbackCoordinates callbackCoordinates, CallbackFontSize callbackFontSize) {
         super(1, 1, 1, 1, null);
 
         this.text = text;
@@ -55,16 +64,23 @@ public class MovableBoxWidget extends ClickableWidget {
         this.maxFontSize = maxFontSize;
         this.lines = lines;
         this.maxLength = maxLength;
+        this.topReserved = topReserved;
+        this.scaleMultiplier = scaleMultiplier;
         this.xPercent = xPercent;
         this.yPercent = yPercent;
 
         recomputeGeometry();
     }
 
-    /// Recompute the widget's scale, size and (from the stored percentages) its on-screen
-    /// position. Called once on construction and again whenever the font size is scrolled.
+    /// Recompute the widget's scale, size, drag bounds and (from the stored percentages) its
+    /// on-screen position. Called once on construction and again whenever the font size is
+    /// scrolled. The anchored point — the box centre for {@link Alignment#CENTER}, otherwise the
+    /// left/right edge — is what {@code (xPercent, yPercent)} marks and what the live HUD pins to,
+    /// so the bounds let that point reach either screen edge (the box may hang off, but always
+    /// keeps {@link #GRAB_MARGIN} px on-screen). Vertically, centred popups behave the same while
+    /// left/right blocks grow downward and stay fully on-screen, matching the live HUD.
     private void recomputeGeometry() {
-        this.scale = fontSize / 10f;
+        this.scale = (fontSize / 10f) * scaleMultiplier;
 
         int screenWidth = MinecraftClient.getInstance().getWindow().getScaledWidth();
         int screenHeight = MinecraftClient.getInstance().getWindow().getScaledHeight();
@@ -72,26 +88,63 @@ public class MovableBoxWidget extends ClickableWidget {
         this.setWidth((int) ((padding * 2 + this.maxLength) * this.scale));
         this.setHeight((int) ((padding * 2 + (textRenderer.fontHeight + 2f) * this.lines) * this.scale));
 
-        this.minWidth = 0;
-        this.maxWidth = Math.max(this.minWidth, screenWidth - this.width);
-        this.minHeight = 24;
-        this.maxHeight = Math.max(this.minHeight, screenHeight - this.height);
+        this.anchorOffsetX = switch (alignment) {
+            case CENTER -> this.width / 2;
+            case RIGHT -> this.width;
+            case LEFT -> 0;
+        };
 
-        float xCoord;
-        float yCoord;
+        int grab = Math.min(this.width, GRAB_MARGIN);
+        this.xMin = Math.max(-this.anchorOffsetX, grab - this.width);
+        this.xMax = Math.min(screenWidth - this.anchorOffsetX, screenWidth - grab);
+
         if (alignment == Alignment.CENTER) {
-            xCoord = xPercent / 100f * screenWidth - this.width / 2f;
-            yCoord = yPercent / 100f * screenHeight - this.height / 2f;
+            this.yMin = topReserved - this.height / 2;
+            this.yMax = screenHeight - this.height / 2;
         } else {
-            boolean rightAlignment = alignment == Alignment.RIGHT;
-            xCoord = ((rightAlignment ? 100 - xPercent : xPercent) / 100f * (this.maxWidth - this.minWidth + this.width)) - (rightAlignment ? this.width : 0);
-            yCoord = yPercent / 100f * (this.maxHeight - this.minHeight) + this.minHeight;
+            this.yMin = topReserved;
+            this.yMax = Math.max(topReserved, screenHeight - this.height);
         }
 
-        this.setX(Math.clamp((long) xCoord, this.minWidth, this.maxWidth));
-        this.setY(Math.clamp((long) yCoord, this.minHeight, this.maxHeight));
+        this.setX(boxXFromPercent(xPercent, screenWidth));
+        this.setY(boxYFromPercent(yPercent, screenHeight));
         this.originalX = getX();
         this.originalY = getY();
+    }
+
+    /// Box left edge for the given anchor percentage, clamped to the drag bounds.
+    private int boxXFromPercent(int percent, int screenWidth) {
+        float anchorScreenX = (alignment == Alignment.RIGHT ? (100 - percent) : percent) / 100f * screenWidth;
+        return Math.clamp((long) (anchorScreenX - anchorOffsetX), xMin, xMax);
+    }
+
+    /// Box top edge for the given anchor percentage, clamped to the drag bounds.
+    private int boxYFromPercent(int percent, int screenHeight) {
+        float top = alignment == Alignment.CENTER
+                ? percent / 100f * screenHeight - this.height / 2f
+                : yMin + percent / 100f * (yMax - yMin);
+        return Math.clamp((long) top, yMin, yMax);
+    }
+
+    /// Anchor percentage (0-100) for the box's current left edge.
+    private int percentXFromBox(int screenWidth) {
+        float pct = (getX() + anchorOffsetX) / (float) screenWidth * 100f;
+        if (alignment == Alignment.RIGHT) {
+            pct = 100 - pct;
+        }
+        return Math.clamp((long) pct, 0, 100);
+    }
+
+    /// Anchor percentage (0-100) for the box's current top edge.
+    private int percentYFromBox(int screenHeight) {
+        float pct;
+        if (alignment == Alignment.CENTER) {
+            pct = (getY() + this.height / 2f) / screenHeight * 100f;
+        } else {
+            int range = yMax - yMin;
+            pct = range <= 0 ? 0 : (getY() - yMin) / (float) range * 100f;
+        }
+        return Math.clamp((long) pct, 0, 100);
     }
 
     @Override
@@ -164,8 +217,8 @@ public class MovableBoxWidget extends ClickableWidget {
         this.deltaX += deltaX;
         this.deltaY += deltaY;
 
-        this.setX(Math.clamp(originalX + (int) this.deltaX, this.minWidth, this.maxWidth));
-        this.setY(Math.clamp(originalY + (int) this.deltaY, this.minHeight, this.maxHeight));
+        this.setX(Math.clamp(originalX + (long) this.deltaX, this.xMin, this.xMax));
+        this.setY(Math.clamp(originalY + (long) this.deltaY, this.yMin, this.yMax));
     }
 
     @Override
@@ -176,21 +229,10 @@ public class MovableBoxWidget extends ClickableWidget {
         this.deltaX = 0;
         this.deltaY = 0;
 
-        float percentageX;
-        float percentageY;
-        if (alignment == Alignment.CENTER) {
-            int screenWidth = MinecraftClient.getInstance().getWindow().getScaledWidth();
-            int screenHeight = MinecraftClient.getInstance().getWindow().getScaledHeight();
-            percentageX = (getX() + width / 2f) / screenWidth * 100;
-            percentageY = (getY() + height / 2f) / screenHeight * 100;
-        } else {
-            boolean rightAlignment = alignment == Alignment.RIGHT;
-            percentageX = rightAlignment ? 100 - ((float) (getX() - minWidth + width) / (maxWidth + width - minWidth) * 100) : (float) (getX() - minWidth) / (maxWidth + width - minWidth) * 100;
-            percentageY = (float) (getY() - minHeight) / (maxHeight - minHeight) * 100;
-        }
-
-        this.xPercent = (int) Math.clamp((long) percentageX, 0, 100);
-        this.yPercent = (int) Math.clamp((long) percentageY, 0, 100);
+        int screenWidth = MinecraftClient.getInstance().getWindow().getScaledWidth();
+        int screenHeight = MinecraftClient.getInstance().getWindow().getScaledHeight();
+        this.xPercent = percentXFromBox(screenWidth);
+        this.yPercent = percentYFromBox(screenHeight);
 
         // Send percentages back
         callbackCoordinates.onRelease(this.xPercent, this.yPercent);

@@ -3,6 +3,7 @@ package io.github.foecollab.screens.hud;
 import io.github.foecollab.common.HudFont;
 import io.github.foecollab.config.FOEConfig;
 import io.github.foecollab.handler.FishingRodHandler;
+import io.github.foecollab.mixin.InGameHudAccessor;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.gui.DrawContext;
@@ -10,22 +11,48 @@ import net.minecraft.text.Text;
 
 /// Draws the bobber waiting-time as a fixed HUD element instead of floating over the bobber.
 /// Active only while the player's own bobber is out (see {@link FishingRodHandler}); its color
-/// follows the cosmetic HUD font color chosen in the config.
+/// follows the cosmetic HUD font color chosen in the config. It steps aside while the bite
+/// notification is on screen and stays hidden once the fish is hooked.
 public class BobberTimerHud {
-    public void render(DrawContext drawContext, MinecraftClient client) {
+    /// Whether the waiting timer is currently allowed to show: the player's own bobber must be
+    /// out and the fish must not be hooked. The reel-in minigame runs in the action bar, so an
+    /// active overlay message means the fish is on the hook and the wait is over.
+    static boolean timerActive(MinecraftClient client) {
         if (!FishingRodHandler.instance().showTimerHud) {
-            return;
+            return false;
         }
-
-        // Disappear the instant the fish is hooked / the bobber is reeled in, without waiting for
-        // the next tick to clear showTimerHud (render runs many times between ticks).
+        // Disappear the instant the bobber is reeled in, without waiting for the next tick to
+        // clear showTimerHud (render runs many times between ticks).
         if (client.player == null || client.player.fishHook == null) {
+            return false;
+        }
+        // An active overlay means the reel-in minigame is running — unless it's just the previous
+        // catch's message finishing its ~3s display, which predates this cast (see staleOverlayTicks).
+        return ((InGameHudAccessor) client.inGameHud).getOverlayRemaining() <= FishingRodHandler.instance().staleOverlayTicks;
+    }
+
+    /// The waiting-time text, with the "s" unit suffix unless toggled off in the config. Shared
+    /// with {@link BiteTitleHud}, which shows the same timer in merged mode.
+    static Text timerText(FOEConfig config) {
+        String format = config.bobberTracker.timerSecondsSuffix ? "%.1fs" : "%.1f";
+        return Text.literal(String.format(format, FishingRodHandler.instance().timerSeconds));
+    }
+
+    public void render(DrawContext drawContext, MinecraftClient client) {
+        if (!timerActive(client)) {
             return;
         }
 
         FOEConfig config = FOEConfig.getConfig();
+
+        // Hand the moment to the bite notification; the timer comes back once it's gone (and the
+        // fish wasn't hooked — timerActive above keeps it hidden after a hook).
+        if (config.biteTitle.enabled && BiteTitleHud.biteTextVisible(config)) {
+            return;
+        }
+
         TextRenderer textRenderer = client.textRenderer;
-        Text text = Text.literal(String.format("%.1fs", FishingRodHandler.instance().timerSeconds));
+        Text text = timerText(config);
         int color = 0xFF000000 | (HudFont.baseColor() & 0xFFFFFF);
 
         drawContext.getMatrices().pushMatrix();

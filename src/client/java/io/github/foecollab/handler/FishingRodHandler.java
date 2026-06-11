@@ -58,6 +58,13 @@ public class FishingRodHandler {
     public boolean showTimerHud = false;
     public float timerSeconds = 0f;
 
+    // A catch leaves its action-bar message up for ~3s (60 ticks), which would hide the timer of a
+    // quick recast. Snapshot the overlay's remaining ticks at cast time and count down alongside it:
+    // while overlayRemaining stays at or below this, the overlay predates the cast and the timer may
+    // show; the reel-in minigame sets a fresh overlay, jumping above it. See BobberTimerHud.
+    public int staleOverlayTicks = 0;
+    private boolean hadBobberOut = false;
+
 
     public static FishingRodHandler instance() {
         if (INSTANCE == null) {
@@ -67,10 +74,24 @@ public class FishingRodHandler {
     }
 
     public void tick(MinecraftClient minecraftClient) {
+        boolean bobberOut = minecraftClient.player != null && minecraftClient.player.fishHook != null;
+        if (bobberOut && !this.hadBobberOut) {
+            this.staleOverlayTicks = ((InGameHudAccessor) minecraftClient.inGameHud).getOverlayRemaining();
+        } else if (this.staleOverlayTicks > 0) {
+            this.staleOverlayTicks--;
+        }
+        this.hadBobberOut = bobberOut;
+
         if(minecraftClient.player != null && minecraftClient.player.getInventory().getMainStacks().getFirst().getItem() == Items.FISHING_ROD) {
-            if(this.fishingRodStack == null || !this.fishingRodStack.equals(minecraftClient.player.getInventory().getMainStacks().getFirst())) {
-                this.fishingRodStack = minecraftClient.player.getInventory().getMainStacks().getFirst();
-                FishingRod fishingRod = FishingRod.getFishingRod(minecraftClient.player.getInventory().getMainStacks().getFirst());
+            ItemStack heldRod = minecraftClient.player.getInventory().getMainStacks().getFirst();
+            // Compare against a *copy* of the rod we last parsed. The client updates the held
+            // stack's components in place when the server decrements the equipped bait on a
+            // catch, so storing the live reference would mean comparing it against itself
+            // (always "equal") and the bait count would never refresh. ItemStack#equals is also
+            // identity-only (Yarn warns against it), so use areEqual to detect the change.
+            if(this.fishingRodStack == null || !ItemStack.areEqual(this.fishingRodStack, heldRod)) {
+                this.fishingRodStack = heldRod.copy();
+                FishingRod fishingRod = FishingRod.getFishingRod(heldRod);
                 if(fishingRod != null) {
                     this.fishingRod = fishingRod;
                 }
@@ -176,7 +197,11 @@ public class FishingRodHandler {
                         this.showTimerHud = true;
                         this.timerSeconds = seconds;
                     } else {
-                        this.addText(textList, TextHelper.concat(Text.literal(String.format("%.1f", seconds)).withColor(config.bobberTracker.timerColor).formatted(Formatting.BOLD), Text.literal("s").formatted(Formatting.GRAY)));
+                        Text timerText = Text.literal(String.format("%.1f", seconds)).withColor(config.bobberTracker.timerColor).formatted(Formatting.BOLD);
+                        if (config.bobberTracker.timerSecondsSuffix) {
+                            timerText = TextHelper.concat(timerText, Text.literal("s").formatted(Formatting.GRAY));
+                        }
+                        this.addText(textList, timerText);
                     }
                 }
 
@@ -209,6 +234,11 @@ public class FishingRodHandler {
 
             // Bait Display
             if (player == null) return;
+            // Once a bait display exists for this bobber, tick() keeps it positioned, so
+            // there's nothing left to do here. Bail before the expensive rod-NBT parsing
+            // below so a crowd of nearby bobbers doesn't re-parse every rod every tick.
+            if (!config.bobberTracker.showBait || baitDisplay.containsKey(entity.getId())) return;
+
             ItemStack rodStack = player.getMainHandStack();
             boolean isOwnBobber = minecraftClient.player != null && Objects.equals(minecraftClient.player.getUuid(), player.getUuid());
 
@@ -222,9 +252,9 @@ public class FishingRodHandler {
                 rod = this.fishingRod;
             }
             if (rod == null) return;
-            
+
             FOMCItem activeBait = rod.getActiveBaitItem();
-            if(config.bobberTracker.showBait && activeBait != null && !this.isTackleboxDisabled(minecraftClient) && !baitDisplay.containsKey(entity.getId())) {
+            if(activeBait != null && !this.isTackleboxDisabled(minecraftClient)) {
                 if (minecraftClient.world == null || minecraftClient.player == null) return;
                 DisplayEntity.ItemDisplayEntity itemDisplayEntity = Objects.requireNonNull(EntityType.ITEM_DISPLAY.create(minecraftClient.world, SpawnReason.TRIGGERED));
                 minecraftClient.world.addEntity(itemDisplayEntity);

@@ -70,8 +70,8 @@ public class BaitHudHandler {
                 : CustomModelDataComponent.DEFAULT;
     }
 
-    /// The bait/lure to show in the HUD. The server stores the equipped item in the rod's
-    /// {@code activeBait} list (with a tacklebox fallback for older data); see
+    /// The bait/lure to show in the HUD: the rod's equipped {@code activeBait}, or null when the
+    /// active bait slot is empty (tacklebox contents that aren't equipped are not shown); see
     /// {@link io.github.foecollab.FOMC.Types.FishingRod#getActiveBaitItem()}.
     private FOMCItem getActiveBait() {
         var fishingRod = FishingRodHandler.instance().fishingRod;
