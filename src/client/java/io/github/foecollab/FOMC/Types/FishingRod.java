@@ -95,32 +95,6 @@ public class FishingRod extends FOMCItem {
         return new ArrayList<>();
     }
 
-    public static Constant getFirstBaitWaterType(NbtCompound rodNbt) {
-        if (!(rodNbt.get("tacklebox") instanceof NbtList nbtList) || nbtList.isEmpty()) {
-            return null;
-        }
-        if (!(nbtList.getFirst() instanceof NbtCompound firstItem)) {
-            return null;
-        }
-        NbtCompound components = firstItem.getCompound("components").orElse(null);
-        if (components == null) {
-            return null;
-        }
-        NbtCompound customData = components.getCompound("minecraft:custom_data").orElse(null);
-        if (customData == null) {
-            return null;
-        }
-        String type = customData.getString("type").orElse("");
-        if (!"bait".equals(type) && !"lure".equals(type)) {
-            return null;
-        }
-        String waterStr = customData.getString("water").orElse("");
-        if (waterStr == null || waterStr.isEmpty()) {
-            return Constant.ANY_WATER;
-        }
-        return Constant.valueOfId(waterStr);
-    }
-
     public static FishingRod getFishingRod(ItemStack itemStack, String type, String name) {
         return new FishingRod(Objects.requireNonNull(ItemStackHelper.getNbt(itemStack)), type, itemStack.get(DataComponentTypes.CUSTOM_MODEL_DATA), name);
     }

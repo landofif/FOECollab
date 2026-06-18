@@ -98,9 +98,10 @@ public class ItemMarkerHandler {
         }
 
         if (config.itemMarker.itemSlotMarker.showPetItemEquippedMarker) {
-            // Show Pet Item Marker
+            // Show Pet Item Marker — only for an actual pet item ("item" NBT), not for a
+            // cosmetic skin or trail.
             boolean[] pet = FOMCItem.isPet(itemStack);
-            if (pet[0] && (pet[1] || pet[2] || pet[3])) {
+            if (pet[0] && pet[2]) {
                 int alpha = ((int) 255f << 24);
                 drawContext.getMatrices().pushMatrix();
                 try {

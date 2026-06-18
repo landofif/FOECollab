@@ -36,6 +36,7 @@ public class SimpleTagFont {
             0xF030, // mariner
             0xF031, // sailor
             0xF032, // angler
+            0xF066, // media
             0xF088  // community manager
     );
 

@@ -1,9 +1,7 @@
 package io.github.foecollab.handler;
 
 import io.github.foecollab.FOMC.Types.Defaults;
-import io.github.foecollab.handler.packet.PacketHandler;
 import io.github.foecollab.util.TextHelper;
-import net.minecraft.client.MinecraftClient;
 import net.minecraft.text.Text;
 
 public class ChatScreenHandler {
@@ -37,17 +35,5 @@ public class ChatScreenHandler {
             }
         }
         return text;
-    }
-
-    public void onOpenScreen() {
-        if (MinecraftClient.getInstance().player != null) {
-            PacketHandler.TYPING_PACKET.sendStartTypingPacket(MinecraftClient.getInstance().player.getUuid());
-        }
-    }
-
-    public void onRemoveScreen() {
-        if (MinecraftClient.getInstance().player != null) {
-            PacketHandler.TYPING_PACKET.sendStopTypingPacket(MinecraftClient.getInstance().player.getUuid());
-        }
     }
 }

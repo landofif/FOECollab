@@ -1,7 +1,6 @@
 package io.github.foecollab.screens.hud;
 
 import io.github.foecollab.FOMC.Constant;
-import io.github.foecollab.common.HudFont;
 import io.github.foecollab.common.Theming;
 import io.github.foecollab.config.FOEConfig;
 import io.github.foecollab.handler.BossBarHandler;
@@ -20,7 +19,7 @@ public class CrewHud {
         TextRenderer textRenderer = client.textRenderer;
 
         // Assemble all text lines
-        Text text = HudFont.recolor(CrewHudHandler.instance().assembleCrewNearbyText());
+        Text text = CrewHudHandler.instance().assembleCrewNearbyText();
 
         drawContext.getMatrices().pushMatrix();
         try {
@@ -53,8 +52,7 @@ public class CrewHud {
                 int paddingHeight = 4;
 
                 int maxLength = textRenderer.getWidth(text);
-                int heightClampTranslation = (int) ((paddingHeight * 2 + lineHeight) * yPercent);
-                heightClampTranslation -= (int) ((padding * 3) * (1 - yPercent));
+                int heightClampTranslation = HudLayout.heightClampTranslation(padding, paddingHeight * 2 + lineHeight, yPercent);
 
                 drawContext.fill(scaledX - maxLength / 2 - padding, scaledY - heightClampTranslation, scaledX + maxLength / 2 + padding, scaledY + paddingHeight * 2 + lineHeight - heightClampTranslation, alphaInt);
 

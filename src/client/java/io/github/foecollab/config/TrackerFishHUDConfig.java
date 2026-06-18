@@ -208,13 +208,16 @@ public class TrackerFishHUDConfig {
         }
 
         public boolean hideTitle = false;
-        public boolean rightAlignment = true;
+        @ConfigEntry.Gui.EnumHandler(option = ConfigEntry.Gui.EnumHandler.EnumDisplayOption.BUTTON)
+        public HudAlignment alignment = HudAlignment.RIGHT;
         @ConfigEntry.BoundedDiscrete(min = 0, max = 100)
         public int backgroundOpacity = 40;
         @ConfigEntry.BoundedDiscrete(max = 20, min = 2)
         public int fontSize = 8;
+        // hudX is measured from the screen's left edge; RIGHT alignment pins the box's right edge
+        // there, so 100 = flush against the right side (the default for this right-aligned HUD).
         @ConfigEntry.Gui.Excluded
-        public int hudX = 0;
+        public int hudX = 100;
         @ConfigEntry.Gui.Excluded
         public int hudY = 30;
     }

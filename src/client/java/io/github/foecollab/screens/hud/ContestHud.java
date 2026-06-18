@@ -1,9 +1,9 @@
 package io.github.foecollab.screens.hud;
 
 import io.github.foecollab.common.FlairDecor;
-import io.github.foecollab.common.HudFont;
 import io.github.foecollab.common.Theming;
 import io.github.foecollab.config.FOEConfig;
+import io.github.foecollab.config.HudAlignment;
 import io.github.foecollab.handler.ThemingHandler;
 import io.github.foecollab.handler.screens.hud.ContestHudHandler;
 import net.minecraft.client.MinecraftClient;
@@ -23,7 +23,7 @@ public class ContestHud {
         TextRenderer textRenderer = client.textRenderer;
 
         // Assemble all text lines
-        List<Text> textList = HudFont.recolorAll(ContestHudHandler.instance().assembleContestText());
+        List<Text> textList = ContestHudHandler.instance().assembleContestText();
 
         drawContext.getMatrices().pushMatrix();
         try {
@@ -31,10 +31,14 @@ public class ContestHud {
             int screenWidth = client.getWindow().getScaledWidth();
             int screenHeight = client.getWindow().getScaledHeight();
 
-            boolean rightAlignment = config.contestTracker.rightAlignment;
+            HudAlignment alignment = config.contestTracker.alignment;
+            boolean center = alignment == HudAlignment.CENTER;
+            boolean left = alignment == HudAlignment.LEFT;
 
-            // Convert percentage config values to screen coordinates
-            float xPercent = rightAlignment ?  1f - (config.contestTracker.hudX / 100f) : config.contestTracker.hudX / 100f;
+            // hudX is the anchor's position from the screen's left edge for every alignment;
+            // alignment only picks which point of the box (left edge / centre / right edge) sits
+            // there, so changing alignment keeps the HUD in place instead of jumping.
+            float xPercent = config.contestTracker.hudX / 100f;
             float yPercent = config.contestTracker.hudY / 100f;
 
             // Calculate base positions relative to screen size
@@ -57,18 +61,26 @@ public class ContestHud {
             AtomicInteger count = new AtomicInteger(0);
 
             int maxLength = textList.stream().map(textRenderer::getWidth).max(Integer::compareTo).orElse(0);
-            int heightClampTranslation = (int) ((padding * 2 + textList.size() * lineHeight) * yPercent);
-            heightClampTranslation -= (int) ((padding * 3) * (1 - yPercent));
+            int heightClampTranslation = HudLayout.heightClampTranslation(padding, padding * 2 + textList.size() * lineHeight, yPercent);
 
-            if (rightAlignment) {
-                drawContext.fill(scaledX, scaledY - heightClampTranslation, scaledX - maxLength - padding * 2, scaledY + ((textList.size() - 1) * lineHeight) + padding * 3 - heightClampTranslation, alphaInt);
+            // Layout anchors. scaledX is the box center (CENTER) or the box's outer left/right edge.
+            int contentLeft;
+            if (center) {
+                contentLeft = scaledX - maxLength / 2;
+            } else if (left) {
+                contentLeft = scaledX + padding;
             } else {
-                drawContext.fill(scaledX, scaledY - heightClampTranslation, scaledX + maxLength + padding * 2, scaledY + ((textList.size() - 1) * lineHeight) + padding * 3 - heightClampTranslation, alphaInt);
+                contentLeft = scaledX - padding - maxLength;
             }
+            int contentRight = contentLeft + maxLength;
+            int boxLeft = contentLeft - padding;
+            int boxRight = contentRight + padding;
+
+            // Draw Background
+            drawContext.fill(boxLeft, scaledY - heightClampTranslation, boxRight, scaledY + ((textList.size() - 1) * lineHeight) + padding * 3 - heightClampTranslation, alphaInt);
 
             // Theming
             FlairDecor flairDecor = ThemingHandler.instance().flairDecorContest;
-            int rightAlignmentOffset = (rightAlignment ? padding * 2 + maxLength : 0);
 
             if(config.theme.themeType != Theming.ThemeType.OFF) {
                 Theming theme = ThemingHandler.instance().currentTheme;
@@ -77,36 +89,42 @@ public class ContestHud {
                 int alphaOverlay = (int) ((config.theme.opacity / 100f) * 255f) << 24;
 
                 // Corners
-                drawContext.drawGuiTexture(RenderPipelines.GUI_TEXTURED,   theme.GUI_TOP_LEFT, scaledX - padding - rightAlignmentOffset, scaledY - padding - heightClampTranslation, 16, 16, alphaOverlay | colorOverlay);
-                drawContext.drawGuiTexture(RenderPipelines.GUI_TEXTURED,   theme.GUI_TOP_RIGHT, scaledX + padding + maxLength - rightAlignmentOffset, scaledY - padding - heightClampTranslation, 16, 16, alphaOverlay | colorOverlay);
-                drawContext.drawGuiTexture(RenderPipelines.GUI_TEXTURED,   theme.GUI_BOTTOM_LEFT, scaledX - padding - rightAlignmentOffset, scaledY + padding * 2 + ((textList.size() - 1) * lineHeight) - heightClampTranslation, 16, 16, alphaOverlay | colorOverlay);
-                drawContext.drawGuiTexture(RenderPipelines.GUI_TEXTURED,   theme.GUI_BOTTOM_RIGHT, scaledX + padding + maxLength - rightAlignmentOffset, scaledY + padding * 2 + ((textList.size() - 1) * lineHeight) - heightClampTranslation, 16, 16, alphaOverlay | colorOverlay);
+                drawContext.drawGuiTexture(RenderPipelines.GUI_TEXTURED,   theme.GUI_TOP_LEFT, boxLeft - padding, scaledY - padding - heightClampTranslation, 16, 16, alphaOverlay | colorOverlay);
+                drawContext.drawGuiTexture(RenderPipelines.GUI_TEXTURED,   theme.GUI_TOP_RIGHT, boxRight - padding, scaledY - padding - heightClampTranslation, 16, 16, alphaOverlay | colorOverlay);
+                drawContext.drawGuiTexture(RenderPipelines.GUI_TEXTURED,   theme.GUI_BOTTOM_LEFT, boxLeft - padding, scaledY + padding * 2 + ((textList.size() - 1) * lineHeight) - heightClampTranslation, 16, 16, alphaOverlay | colorOverlay);
+                drawContext.drawGuiTexture(RenderPipelines.GUI_TEXTURED,   theme.GUI_BOTTOM_RIGHT, boxRight - padding, scaledY + padding * 2 + ((textList.size() - 1) * lineHeight) - heightClampTranslation, 16, 16, alphaOverlay | colorOverlay);
 
                 // Sides
-                drawContext.drawGuiTexture(RenderPipelines.GUI_TEXTURED,   theme.GUI_LEFT, scaledX - padding - rightAlignmentOffset, scaledY + padding - heightClampTranslation, 16, ((textList.size() - 1) * lineHeight) + padding, alphaOverlay | colorOverlay);
-                drawContext.drawGuiTexture(RenderPipelines.GUI_TEXTURED,   theme.GUI_RIGHT, scaledX + padding + maxLength - rightAlignmentOffset, scaledY + padding - heightClampTranslation, 16, ((textList.size() - 1) * lineHeight) + padding, alphaOverlay | colorOverlay);
-                drawContext.drawGuiTexture(RenderPipelines.GUI_TEXTURED,   theme.GUI_TOP, scaledX + padding - rightAlignmentOffset, scaledY - padding - heightClampTranslation, maxLength, 16, alphaOverlay | colorOverlay);
-                drawContext.drawGuiTexture(RenderPipelines.GUI_TEXTURED,   theme.GUI_BOTTOM, scaledX + padding - rightAlignmentOffset, scaledY + padding * 2 + ((textList.size() - 1) * lineHeight) - heightClampTranslation, maxLength, 16, alphaOverlay | colorOverlay);
+                drawContext.drawGuiTexture(RenderPipelines.GUI_TEXTURED,   theme.GUI_LEFT, boxLeft - padding, scaledY + padding - heightClampTranslation, 16, ((textList.size() - 1) * lineHeight) + padding, alphaOverlay | colorOverlay);
+                drawContext.drawGuiTexture(RenderPipelines.GUI_TEXTURED,   theme.GUI_RIGHT, boxRight - padding, scaledY + padding - heightClampTranslation, 16, ((textList.size() - 1) * lineHeight) + padding, alphaOverlay | colorOverlay);
+                drawContext.drawGuiTexture(RenderPipelines.GUI_TEXTURED,   theme.GUI_TOP, contentLeft, scaledY - padding - heightClampTranslation, maxLength, 16, alphaOverlay | colorOverlay);
+                drawContext.drawGuiTexture(RenderPipelines.GUI_TEXTURED,   theme.GUI_BOTTOM, contentLeft, scaledY + padding * 2 + ((textList.size() - 1) * lineHeight) - heightClampTranslation, maxLength, 16, alphaOverlay | colorOverlay);
 
                 // Title (skipped when hidden so only a clean top border remains)
                 if (!config.contestTracker.hideTitle) {
                     Text title = Text.literal("ᴄᴏɴᴛᴇѕᴛ").withColor(ThemingHandler.instance().currentThemeType.TEXT_COLOR).formatted(Formatting.BOLD);
-                    drawContext.drawGuiTexture(RenderPipelines.GUI_TEXTURED,   theme.GUI_TEXT_LEFT, scaledX + (maxLength + padding * 2) / 2 - textRenderer.getWidth(title) / 2 - 16 - rightAlignmentOffset, scaledY - padding - heightClampTranslation, 16, 16, alphaOverlay | colorOverlay);
-                    drawContext.drawGuiTexture(RenderPipelines.GUI_TEXTURED,   theme.GUI_TEXT_MIDDLE, scaledX  + (maxLength + padding * 2) / 2 - textRenderer.getWidth(title) / 2 - rightAlignmentOffset, scaledY - padding - heightClampTranslation, textRenderer.getWidth(title), 16, alphaOverlay | colorOverlay);
-                    drawContext.drawGuiTexture(RenderPipelines.GUI_TEXTURED,   theme.GUI_TEXT_RIGHT, scaledX + (maxLength + padding * 2) / 2 + textRenderer.getWidth(title) / 2 - rightAlignmentOffset, scaledY - padding - heightClampTranslation, 16, 16, alphaOverlay | colorOverlay);
-                    drawContext.drawText(textRenderer, title, scaledX + (maxLength + padding * 2) / 2 - textRenderer.getWidth(title) / 2 - rightAlignmentOffset, scaledY - textRenderer.fontHeight / 2 - heightClampTranslation - 1, themeTextColor, false);
+                    int titleWidth = textRenderer.getWidth(title);
+                    int titleX = contentLeft + (maxLength - titleWidth) / 2;
+                    drawContext.drawGuiTexture(RenderPipelines.GUI_TEXTURED,   theme.GUI_TEXT_LEFT, titleX - 16, scaledY - padding - heightClampTranslation, 16, 16, alphaOverlay | colorOverlay);
+                    drawContext.drawGuiTexture(RenderPipelines.GUI_TEXTURED,   theme.GUI_TEXT_MIDDLE, titleX, scaledY - padding - heightClampTranslation, titleWidth, 16, alphaOverlay | colorOverlay);
+                    drawContext.drawGuiTexture(RenderPipelines.GUI_TEXTURED,   theme.GUI_TEXT_RIGHT, titleX + titleWidth, scaledY - padding - heightClampTranslation, 16, 16, alphaOverlay | colorOverlay);
+                    drawContext.drawText(textRenderer, title, titleX, scaledY - textRenderer.fontHeight / 2 - heightClampTranslation - 1, themeTextColor, false);
                 }
             }
 
             // Flair
-            drawContext.drawGuiTexture(RenderPipelines.GUI_TEXTURED,   flairDecor.GUI_FLAIR_TOP_LEFT, scaledX - padding - rightAlignmentOffset - 24, scaledY - padding - heightClampTranslation - 24, 64, 64);
-            drawContext.drawGuiTexture(RenderPipelines.GUI_TEXTURED,   flairDecor.GUI_FLAIR_TOP_RIGHT, scaledX + padding + maxLength - rightAlignmentOffset - 24, scaledY - padding - heightClampTranslation - 24, 64, 64);
-            drawContext.drawGuiTexture(RenderPipelines.GUI_TEXTURED,   flairDecor.GUI_FLAIR_BOTTOM_LEFT, scaledX - padding - rightAlignmentOffset - 24, scaledY + padding * 2 + ((textList.size() - 1) * lineHeight) - heightClampTranslation - 24, 64, 64);
-            drawContext.drawGuiTexture(RenderPipelines.GUI_TEXTURED,   flairDecor.GUI_FLAIR_BOTTOM_RIGHT, scaledX + padding + maxLength - rightAlignmentOffset - 24, scaledY + padding * 2 + ((textList.size() - 1) * lineHeight) - heightClampTranslation - 24, 64, 64);
+            drawContext.drawGuiTexture(RenderPipelines.GUI_TEXTURED,   flairDecor.GUI_FLAIR_TOP_LEFT, boxLeft - padding - 24, scaledY - padding - heightClampTranslation - 24, 64, 64);
+            drawContext.drawGuiTexture(RenderPipelines.GUI_TEXTURED,   flairDecor.GUI_FLAIR_TOP_RIGHT, boxRight - padding - 24, scaledY - padding - heightClampTranslation - 24, 64, 64);
+            drawContext.drawGuiTexture(RenderPipelines.GUI_TEXTURED,   flairDecor.GUI_FLAIR_BOTTOM_LEFT, boxLeft - padding - 24, scaledY + padding * 2 + ((textList.size() - 1) * lineHeight) - heightClampTranslation - 24, 64, 64);
+            drawContext.drawGuiTexture(RenderPipelines.GUI_TEXTURED,   flairDecor.GUI_FLAIR_BOTTOM_RIGHT, boxRight - padding - 24, scaledY + padding * 2 + ((textList.size() - 1) * lineHeight) - heightClampTranslation - 24, 64, 64);
 
             int finalHeightClampTranslation = heightClampTranslation;
-            textList.forEach(text -> drawContext.drawText(textRenderer, text, rightAlignment ? scaledX - textRenderer.getWidth(text) - padding: scaledX + padding, scaledY + (count.getAndIncrement() * lineHeight) + padding - finalHeightClampTranslation, 0xFFFFFFFF, true));
-            
+            textList.forEach(text -> {
+                int textWidth = textRenderer.getWidth(text);
+                int x = center ? contentLeft + (maxLength - textWidth) / 2 : left ? contentLeft : contentRight - textWidth;
+                drawContext.drawText(textRenderer, text, x, scaledY + (count.getAndIncrement() * lineHeight) + padding - finalHeightClampTranslation, 0xFFFFFFFF, true);
+            });
+
         } finally {
             drawContext.getMatrices().popMatrix();
         }

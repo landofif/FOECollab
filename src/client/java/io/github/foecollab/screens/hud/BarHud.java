@@ -1,6 +1,5 @@
 package io.github.foecollab.screens.hud;
 
-import io.github.foecollab.common.HudFont;
 import io.github.foecollab.config.FOEConfig;
 import io.github.foecollab.handler.screens.hud.BarHudHandler;
 import net.minecraft.client.MinecraftClient;
@@ -15,9 +14,9 @@ public class BarHud {
         TextRenderer textRenderer = client.textRenderer;
 
         // Assemble all text lines
-        Text leftText = HudFont.recolor(BarHudHandler.instance().assembleLeftText());
-        Text middleText = HudFont.recolor(BarHudHandler.instance().assembleMiddleText());
-        Text rightText = HudFont.recolor(BarHudHandler.instance().assembleRightText());
+        Text leftText = BarHudHandler.instance().assembleLeftText();
+        Text middleText = BarHudHandler.instance().assembleMiddleText();
+        Text rightText = BarHudHandler.instance().assembleRightText();
 
         drawContext.getMatrices().pushMatrix();
         try {

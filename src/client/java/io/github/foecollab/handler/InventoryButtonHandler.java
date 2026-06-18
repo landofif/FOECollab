@@ -2,6 +2,8 @@ package io.github.foecollab.handler;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import com.google.gson.JsonSyntaxException;
 import io.github.foecollab.FOECollab;
 import net.fabricmc.loader.api.FabricLoader;
@@ -11,6 +13,7 @@ import net.minecraft.item.Items;
 import net.minecraft.registry.Registries;
 import net.minecraft.util.Identifier;
 
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -20,6 +23,7 @@ import java.util.Base64;
 import java.util.Collections;
 import java.util.List;
 import java.util.zip.Deflater;
+import java.util.zip.GZIPInputStream;
 import java.util.zip.Inflater;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -192,7 +196,21 @@ public class InventoryButtonHandler {
         }
         try {
             String json = decompress(Base64.getDecoder().decode(base64));
-            ExportedButton exported = gson.fromJson(json, ExportedButton.class);
+            JsonObject root = JsonParser.parseString(json).getAsJsonObject();
+
+            // FoE-R exports a Pair<CustomButton, version> which serialises to
+            // {"value1":{button},"value2":version}. Its CustomButton has the same fields as ours, so
+            // translate that shape directly (its GZIP compression is handled in decompress) — this is
+            // what lets buttons shared from FoE-R import cleanly.
+            if (root.has("value1") && !root.has("button")) {
+                if (root.has("value2") && !root.get("value2").isJsonNull()
+                        && root.get("value2").getAsInt() > BUTTON_VERSION) {
+                    return null;
+                }
+                return gson.fromJson(root.get("value1"), CustomButton.class);
+            }
+
+            ExportedButton exported = gson.fromJson(root, ExportedButton.class);
             if (exported == null || exported.button == null || exported.version > BUTTON_VERSION) {
                 return null;
             }
@@ -239,6 +257,12 @@ public class InventoryButtonHandler {
     }
 
     private static String decompress(byte[] data) throws Exception {
+        // FoE-R compresses with GZIP (magic 0x1F 0x8B); our own exports use raw zlib/Deflate.
+        if (data.length >= 2 && (data[0] & 0xFF) == 0x1F && (data[1] & 0xFF) == 0x8B) {
+            try (GZIPInputStream gis = new GZIPInputStream(new ByteArrayInputStream(data))) {
+                return new String(gis.readAllBytes(), UTF_8);
+            }
+        }
         Inflater inflater = new Inflater();
         inflater.setInput(data);
         ByteArrayOutputStream out = new ByteArrayOutputStream();

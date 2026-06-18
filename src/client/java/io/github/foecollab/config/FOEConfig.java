@@ -65,6 +65,10 @@ public class FOEConfig implements ConfigData {
     @ConfigEntry.Category(value = TRACKERS)
     @ConfigEntry.Gui.CollapsibleObject
     public TrackerBobberConfig.BobberTracker bobberTracker = new TrackerBobberConfig.BobberTracker();
+
+    @ConfigEntry.Category(value = TRACKERS)
+    @ConfigEntry.Gui.CollapsibleObject
+    public TrackerChummerHUDConfig.ChummerTracker chummerTracker = new TrackerChummerHUDConfig.ChummerTracker();
     //endregion
 
     //region Tooltips
@@ -92,10 +96,14 @@ public class FOEConfig implements ConfigData {
 
     // Mouse-wheel hotbar slot cycling while in game (chat/menu scrolling is never affected).
     @ConfigEntry.Category(value = OTHER)
-    public boolean hotbarScrolling = false;
+    public boolean hotbarScrolling = true;
 
     @ConfigEntry.Category(value = OTHER)
     public boolean hideHealthAndHunger = false;
+
+    // Master toggle for user-created custom HUDs (edited via the FoE main screen → Custom HUDs).
+    @ConfigEntry.Category(value = OTHER)
+    public boolean customHuds = true;
 
     @ConfigEntry.Category(value = OTHER)
     @ConfigEntry.Gui.Tooltip
@@ -148,10 +156,6 @@ public class FOEConfig implements ConfigData {
     @ConfigEntry.Category(value = OTHER)
     @ConfigEntry.Gui.CollapsibleObject
     public PetFollowerConfig.PetFollower petFollower = new PetFollowerConfig.PetFollower();
-
-    @ConfigEntry.Category(value = OTHER)
-    @ConfigEntry.Gui.CollapsibleObject
-    public PlayerStatusConfig.PlayerStatus playerStatus = new PlayerStatusConfig.PlayerStatus();
 
     @ConfigEntry.Category(value = OTHER)
     @ConfigEntry.Gui.CollapsibleObject

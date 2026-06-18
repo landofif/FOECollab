@@ -6,6 +6,7 @@ import net.minecraft.component.DataComponentTypes;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.nbt.NbtCompound;
+import net.minecraft.nbt.NbtList;
 
 import java.util.Objects;
 
@@ -113,11 +114,13 @@ public class FOMCItem {
         return false;
     }
 
+    /// {isPet, hasSkin, hasItem, hasTrail}. hasItem means the "item" list actually holds a pet
+    /// item — a key that exists but is empty doesn't count.
     public static boolean[] isPet(ItemStack itemStack) {
         if(itemStack.get(DataComponentTypes.CUSTOM_DATA) != null) {
             NbtCompound nbtCompound = ItemStackHelper.getNbtView(itemStack);
             if (nbtCompound != null && nbtCompound.contains("type")) {
-                return Objects.equals(nbtCompound.getString("type").orElse(""), Defaults.ItemTypes.PET) ? new boolean[]{true, nbtCompound.contains("skin"), nbtCompound.contains("item"), nbtCompound.contains("trail")} : new boolean[]{false};
+                return Objects.equals(nbtCompound.getString("type").orElse(""), Defaults.ItemTypes.PET) ? new boolean[]{true, nbtCompound.contains("skin"), !nbtCompound.getList("item").orElse(new NbtList()).isEmpty(), nbtCompound.contains("trail")} : new boolean[]{false};
             }
         }
         return new boolean[]{false};

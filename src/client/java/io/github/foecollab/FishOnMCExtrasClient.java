@@ -7,6 +7,7 @@ import io.github.foecollab.handler.*;
 import io.github.foecollab.handler.packet.PacketHandler;
 import io.github.foecollab.util.LocationNameHelper;
 import io.github.foecollab.util.SimpleTagFont;
+import io.github.foecollab.screens.hud.ChummerRangeRenderer;
 import io.github.foecollab.screens.hud.MainHudRenderer;
 import io.github.foecollab.screens.main.FoETitleScreen;
 import io.github.foecollab.screens.petCalculator.PetCalculatorScreen;
@@ -61,6 +62,7 @@ public class FishOnMCExtrasClient implements ClientModInitializer {
         ServerPackHandler.instance().extract();
         KeybindHandler.instance().init();
         PacketHandler.instance().addHandlers();
+        ChummerRangeRenderer.register();
 
         ClientPlayConnectionEvents.JOIN.register(this::onJoin);
         ClientPlayConnectionEvents.DISCONNECT.register(this::onLeave);
@@ -89,6 +91,7 @@ public class FishOnMCExtrasClient implements ClientModInitializer {
                     WorldHandler.instance().tick(minecraftClient);
                     FishCatchHandler.instance().tick(minecraftClient);
                     PetEquipHandler.instance().tick(minecraftClient);
+                    ChummerHandler.instance().tick(minecraftClient);
                     FullInventoryHandler.instance().tick(minecraftClient);
                     NotificationSoundHandler.instance().tick(minecraftClient);
                     RayTracingHandler.instance().tick(minecraftClient);
@@ -112,7 +115,6 @@ public class FishOnMCExtrasClient implements ClientModInitializer {
                     OtherPlayerHandler.instance().tick(minecraftClient);
                     HiderHandler.instance().tick(minecraftClient);
                     OwnPlayerHandler.instance().tick(minecraftClient);
-                    PlayerStatusHandler.instance().tick(minecraftClient);
                     TimerHandler.instance().tick();
                     EventHandler.instance().onEventTick();
                 }
@@ -124,6 +126,8 @@ public class FishOnMCExtrasClient implements ClientModInitializer {
     private void onJoin(ClientPlayNetworkHandler clientPlayNetworkHandler, PacketSender packetSender, MinecraftClient minecraftClient) {
         LoadingHandler.instance().init();
         PetEquipHandler.instance().init();
+        ChummerHandler.instance().clear();
+        OtherPlayerHandler.instance().clear();
         NotificationSoundHandler.instance().init();
         DiscordHandler.instance().init();
 
@@ -155,12 +159,14 @@ public class FishOnMCExtrasClient implements ClientModInitializer {
 
     private boolean allowGameMessage(Text text, boolean overlay) {
         if(LoadingHandler.instance().isOnServer) {
+            // Observes "... activated a ... Chummer" broadcasts; never suppresses the message.
+            ChummerHandler.instance().onReceiveMessage(text);
+
             if (PetEquipHandler.instance().onReceiveMessage(text) ||
                 ContestHandler.instance().onReceiveMessage(text) ||
                 CrewHandler.instance().onReceiveMessage(text) ||
                 FishCatchHandler.instance().onReceiveMessage(text) ||
                 StaffHandler.instance().onReceiveMessage(text) ||
-                PlayerStatusHandler.instance().onReceiveMessage(text) ||
                 TimerHandler.instance().onReceiveMessage(text) ||
                 EventHandler.instance().onReceiveMessage(text) ||
                 AutoTippingHandler.instance().onReceiveMessage(text) ||
@@ -250,6 +256,7 @@ public class FishOnMCExtrasClient implements ClientModInitializer {
 
     private void onLeave(ClientPlayNetworkHandler clientPlayNetworkHandler, MinecraftClient minecraftClient) {
         LoadingHandler.instance().init();
+        ChummerHandler.instance().clear();
         FishCatchHandler.instance().onLeaveServer();
         ContestHandler.instance().onLeaveServer();
         LoadingHandler.instance().isOnServer = false;
@@ -291,7 +298,6 @@ public class FishOnMCExtrasClient implements ClientModInitializer {
             } else if (screen instanceof InventoryScreen) {
                 InventoryScreenHandler.instance().screenInit = true;
             } else if (screen instanceof ChatScreen || Objects.equals(screen.getTitle().getString(), "Chat screen")) {
-                ChatScreenHandler.instance().onOpenScreen();
                 ChatScreenHandler.instance().screenInit = true;
             } else if (screen.getTitle().getString().contains("Personal Vault ")) {
                 PersonalVaultScreenHandler.instance().page = Integer.parseInt(screen.getTitle().getString().substring(screen.getTitle().getString().length() - 1));
@@ -342,7 +348,6 @@ public class FishOnMCExtrasClient implements ClientModInitializer {
                 CrewHandler.instance().crewMenuState = false;
                 CrewHandler.instance().onScreenClose();
             } else if(screen instanceof ChatScreen || Objects.equals(screen.getTitle().getString(), "")) {
-                ChatScreenHandler.instance().onRemoveScreen();
                 ChatScreenHandler.instance().screenInit = false;
             } else if (Objects.equals(screen.getTitle().getString(), "Tackle Shop\uEEE7\uEEE3합")) {
                 // Tackle Shop

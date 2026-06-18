@@ -4,6 +4,7 @@ import io.github.foecollab.FOMC.Types.FOMCItem;
 import io.github.foecollab.config.FOEConfig;
 import io.github.foecollab.util.ColorHelper;
 import io.github.foecollab.util.ItemStackHelper;
+import io.github.foecollab.util.ThrottledCache;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
@@ -18,6 +19,13 @@ public class BaitSortingHelperHandler {
     private static BaitSortingHelperHandler INSTANCE = new BaitSortingHelperHandler();
 
     public boolean toggle = false;
+
+    // The bait counts only change when items move, but renderItemMarker runs once per slot per
+    // frame. Recomputing the whole inventory scan (with an NBT read per slot) for every slot every
+    // frame was the source of the lag — O(slots^2) per frame. Cache the counts and rebuild a few
+    // times a second regardless of framerate.
+    private final ThrottledCache<Map<String, Integer>> baitCountCache =
+            new ThrottledCache<>(150, BaitSortingHelperHandler::computeBaitCounts);
 
     public static BaitSortingHelperHandler instance() {
         if (INSTANCE == null) {
@@ -43,15 +51,16 @@ public class BaitSortingHelperHandler {
         boolean showOnlyWhilePressingKeybind = FOEConfig
                 .getConfig().baitSortingHelperVisibility.showOnlyWhilePressingKeybind;
 
-        if (!FOMCItem.isFOMCItem(itemStack)) {
+        // When the keybind-hold mode is off, the helper is always on; otherwise it shows only
+        // while the keybind is held.
+        boolean isActive = !showOnlyWhilePressingKeybind
+                || KeybindHandler.instance().visualizeBaitSorting;
+
+        if (!isActive) {
             return;
         }
 
-        boolean isActive = showOnlyWhilePressingKeybind
-                ? KeybindHandler.instance().visualizeBaitSorting
-                : BaitSortingHelperHandler.instance().toggle;
-
-        if (!isActive) {
+        if (!FOMCItem.isFOMCItem(itemStack)) {
             return;
         }
 
@@ -59,7 +68,7 @@ public class BaitSortingHelperHandler {
             return;
         }
 
-        Map<String, Integer> baitCounts = getCurBaits();
+        Map<String, Integer> baitCounts = baitCountCache.get();
         String baitKey = getBaitKey(itemStack);
 
         if (baitCounts.getOrDefault(baitKey, 0) > 1) {
@@ -78,7 +87,7 @@ public class BaitSortingHelperHandler {
     }
 
     private static boolean isBait(ItemStack itemStack) {
-        NbtCompound data = ItemStackHelper.getNbt(itemStack);
+        NbtCompound data = ItemStackHelper.getNbtView(itemStack);
         if (data == null) {
             return false;
         }
@@ -89,7 +98,7 @@ public class BaitSortingHelperHandler {
     }
 
     private static String getBaitKey(ItemStack itemStack) {
-        NbtCompound data = ItemStackHelper.getNbt(itemStack);
+        NbtCompound data = ItemStackHelper.getNbtView(itemStack);
         if (data != null && data.contains("name")) {
             String nbtName = data.getString("name").orElse("");
             if (!nbtName.isBlank()) {
@@ -99,7 +108,7 @@ public class BaitSortingHelperHandler {
         return itemStack.getName().getString().toLowerCase();
     }
 
-    private static Map<String, Integer> getCurBaits() {
+    private static Map<String, Integer> computeBaitCounts() {
         Map<String, Integer> counts = new HashMap<>();
 
         Screen screen = MinecraftClient.getInstance().currentScreen;

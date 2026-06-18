@@ -10,6 +10,7 @@
     {"type":"bitmap","file":"foecollab:font/tag/mariner.png","ascent":7,"height":7,"chars":["\uF030"]},
     {"type":"bitmap","file":"foecollab:font/tag/sailor.png","ascent":7,"height":7,"chars":["\uF031"]},
     {"type":"bitmap","file":"foecollab:font/tag/angler.png","ascent":7,"height":7,"chars":["\uF032"]},
+    {"type":"bitmap","file":"foecollab:font/tag/media.png","ascent":7,"height":7,"chars":["\uF066"]},
     {"type":"bitmap","file":"foecollab:font/tag/communitymanager.png","ascent":7,"height":7,"chars":["\uF088"]},
     {"type":"bitmap","file":"foecollab:font/tag/common.png","ascent":7,"height":7,"chars":["\uF033"]},
     {"type":"bitmap","file":"foecollab:font/tag/rare.png","ascent":7,"height":7,"chars":["\uF034"]},

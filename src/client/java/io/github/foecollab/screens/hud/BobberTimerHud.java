@@ -2,6 +2,7 @@ package io.github.foecollab.screens.hud;
 
 import io.github.foecollab.common.HudFont;
 import io.github.foecollab.config.FOEConfig;
+import io.github.foecollab.config.HudAlignment;
 import io.github.foecollab.handler.FishingRodHandler;
 import io.github.foecollab.mixin.InGameHudAccessor;
 import net.minecraft.client.MinecraftClient;
@@ -60,8 +61,13 @@ public class BobberTimerHud {
             int screenWidth = client.getWindow().getScaledWidth();
             int screenHeight = client.getWindow().getScaledHeight();
 
-            // Calculate base positions relative to screen size (movable via the HUD editor)
-            int baseX = (int) (screenWidth * (config.bobberTracker.timerHudX / 100f));
+            HudAlignment alignment = config.bobberTracker.timerHudAlignment;
+
+            // Calculate base positions relative to screen size (movable via the HUD editor). hudX is
+            // the anchor's position from the screen's left edge for every alignment; alignment only
+            // picks which point of the box sits there, so it stays put when alignment changes.
+            float xPercent = config.bobberTracker.timerHudX / 100f;
+            int baseX = (int) (screenWidth * xPercent);
             int baseY = (int) (screenHeight * (config.bobberTracker.timerHudY / 100f));
 
             float scale = config.bobberTracker.timerHudFontSize / 10.0f;
@@ -70,7 +76,12 @@ public class BobberTimerHud {
             int scaledX = (int) (baseX / scale);
             int scaledY = (int) (baseY / scale);
 
-            drawContext.drawText(textRenderer, text, scaledX - textRenderer.getWidth(text) / 2, scaledY, color, true);
+            int textX = switch (alignment) {
+                case CENTER -> scaledX - textRenderer.getWidth(text) / 2;
+                case LEFT -> scaledX;
+                case RIGHT -> scaledX - textRenderer.getWidth(text);
+            };
+            drawContext.drawText(textRenderer, text, textX, scaledY, color, true);
         } finally {
             drawContext.getMatrices().popMatrix();
         }

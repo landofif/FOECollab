@@ -6,9 +6,14 @@ import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.PlayerListEntry;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.decoration.DisplayEntity;
+import net.minecraft.text.Text;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public class OtherPlayerHandler {
     private static OtherPlayerHandler INSTANCE = new OtherPlayerHandler();
@@ -21,6 +26,12 @@ public class OtherPlayerHandler {
     public boolean isHighlighted = false;
 
     private final List<Integer> hiddenNamePlates = new ArrayList<>();
+    // A text display's Text reference only changes when the server actually updates the line,
+    // so the last processed reference per entity id lets a tick skip the getString tree walk
+    // (a crowd has hundreds of nameplates) and ensures a dev nameplate is re-tagged only once
+    // per text, not json-roundtripped every tick.
+    private final Map<Integer, Text> processedNameplates = new HashMap<>();
+    private final Set<Integer> markedNameplates = new HashSet<>();
 
     public static OtherPlayerHandler instance() {
         if (INSTANCE == null) {
@@ -54,35 +65,55 @@ public class OtherPlayerHandler {
             return;
         }
 
-        // Resolve the nameplate text once. getText().getString() walks the text tree and
-        // allocates, and a crowd has many nameplates; the old code rebuilt this several
-        // times per entity per tick (once per check plus once per dev in the stream below).
-        String nameplateText = textDisplayEntity.getText().getString();
-        if (!nameplateText.contains(NAMEPLATE_MARKER)) {
-            return;
-        }
+        int id = entity.getId();
+        Text current = textDisplayEntity.getText();
+        boolean unchanged = processedNameplates.get(id) == current;
+        String nameplateText = unchanged ? null : current.getString();
+        boolean marked = unchanged ? markedNameplates.contains(id) : nameplateText.contains(NAMEPLATE_MARKER);
 
         // Dim FoE nameplates while the HUD is hidden (e.g. for screenshots).
-        if (minecraftClient.options.hudHidden) {
+        if (minecraftClient.options.hudHidden && marked && !hiddenNamePlates.contains(id)) {
             textDisplayEntity.setTextOpacity((byte) 24);
-            if (!hiddenNamePlates.contains(entity.getId())) {
-                hiddenNamePlates.add(entity.getId());
-            }
+            hiddenNamePlates.add(id);
         }
 
-        // Re-tag FoE dev nameplates.
+        if (unchanged) {
+            return;
+        }
+        if (processedNameplates.size() > 4096) {
+            // Entity ids of long-gone nameplates pile up over a session; a rare full clear
+            // just makes the next tick re-resolve everything once.
+            processedNameplates.clear();
+            markedNameplates.clear();
+        }
+        processedNameplates.put(id, current);
+        if (!marked) {
+            markedNameplates.remove(id);
+            return;
+        }
+        markedNameplates.add(id);
+
+        // Re-tag FoE dev nameplates (once per text — setText stores the new reference below).
         Defaults.FoEDevType senderDev = Defaults.foeDevs.values().stream()
                 .filter(foEDevType -> nameplateText.contains(foEDevType.name))
                 .findFirst()
                 .orElse(null);
 
         if (senderDev != null) {
-            String jsonText = TextHelper.textToJson(textDisplayEntity.getText());
+            String jsonText = TextHelper.textToJson(current);
             jsonText = TextHelper.replaceToFoE(jsonText, senderDev.usePurpleTag);
             if (!senderDev.usePurpleTag) {
                 jsonText = jsonText.replace("B05BF9", "00AF0E");
             }
             textDisplayEntity.setText(TextHelper.jsonToText(jsonText));
+            processedNameplates.put(id, textDisplayEntity.getText());
         }
+    }
+
+    /// Forget all cached nameplate state (server join / world change).
+    public void clear() {
+        this.hiddenNamePlates.clear();
+        this.processedNameplates.clear();
+        this.markedNameplates.clear();
     }
 }

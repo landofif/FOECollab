@@ -2,6 +2,6 @@ package io.github.foecollab.config;
 
 public class BaitSortingHelperConfig {
     public static class BaitSortingHelperVisibility {
-        public boolean showOnlyWhilePressingKeybind = false;
+        public boolean showOnlyWhilePressingKeybind = true;
     }
 }

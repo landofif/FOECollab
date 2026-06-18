@@ -125,7 +125,36 @@ public class ArmorHandler {
                         insertArmorRollTooltip(slot - offsetSlot, 1, armor, emptyLine, textList);
                     if (armor.armorBonuses.get(0).rolled)
                         insertArmorRollTooltip(slot - offsetSlot, 0, armor, emptyLine, textList);
+
+                    // Who crafted/identified the piece (NBT "uuid"); the key is absent on
+                    // some older pieces, and Armor.crafter is a random UUID in that case.
+                    if (nbtCompound != null && nbtCompound.contains("uuid")) {
+                        insertArmorCrafterTooltip(armor, emptyLine, textList);
+                    }
                 }
+            }
+        }
+    }
+
+    /// Inserts "ᴄʀᴀꜰᴛᴇᴅ ʙʏ: &lt;player&gt;" right under the quality line. The username
+    /// resolves asynchronously; tooltips rebuild every frame, so a "loading" line
+    /// swaps to the name as soon as the lookup lands.
+    private void insertArmorCrafterTooltip(Armor armor, Text prefix, List<Text> textList) {
+        for (int i = 0; i < textList.size(); i++) {
+            // matches both ꞯᴜᴀʟɪᴛʏ and Qᴜᴀʟɪᴛʏ spellings
+            if (textList.get(i).getString().contains("ᴜᴀʟɪᴛʏ")) {
+                String username = ProfileNameHandler.instance().getUsername(armor.crafter);
+                Text nameText = username == null
+                        ? Text.literal("ʟᴏᴀᴅɪɴɢ...").formatted(Formatting.DARK_GRAY)
+                        : username.isEmpty()
+                                ? Text.literal("ᴜɴᴋɴᴏᴡɴ").formatted(Formatting.DARK_GRAY)
+                                : Text.literal(username).formatted(Formatting.YELLOW);
+
+                textList.add(i + 1, TextHelper.concat(
+                        prefix,
+                        Text.literal("    └ ᴄʀᴀꜰᴛᴇᴅ ʙʏ: ").formatted(Formatting.GRAY),
+                        nameText));
+                return;
             }
         }
     }

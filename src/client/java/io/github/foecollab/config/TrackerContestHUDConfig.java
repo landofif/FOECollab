@@ -48,7 +48,8 @@ public class TrackerContestHUDConfig {
         public boolean recieveLocalPBs = true;
         @ConfigEntry.Gui.Tooltip
         public boolean suppressServerMessages = false;
-        public boolean rightAlignment = false;
+        @ConfigEntry.Gui.EnumHandler(option = ConfigEntry.Gui.EnumHandler.EnumDisplayOption.BUTTON)
+        public HudAlignment alignment = HudAlignment.LEFT;
         @ConfigEntry.BoundedDiscrete(min = 0, max = 100)
         public int backgroundOpacity = 40;
         @ConfigEntry.BoundedDiscrete(max = 20, min = 2)

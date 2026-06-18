@@ -348,6 +348,8 @@ public class FishCatchHandler {
 	}
 
 	public void onFishCaughtSendDryStreak(Fish fish) {
+		List<Text> lines = new ArrayList<>();
+
 		if (fish.rarity == Constant.COMMON
 				&& config.fishTracker.dryStreakMessageToggles.rarityMessageToggles.showCommon ||
 				fish.rarity == Constant.RARE
@@ -362,8 +364,8 @@ public class FishCatchHandler {
 				fish.rarity == Constant.MYTHICAL
 						&& config.fishTracker.dryStreakMessageToggles.rarityMessageToggles.showMythical) {
 
-			sendFishDryStreakMessage(fish.rarity,
-					ProfileDataHandler.instance().profileData.rarityDryStreak.getOrDefault(fish.rarity, 0));
+			lines.add(buildFishDryStreakLine(fish.rarity,
+					ProfileDataHandler.instance().profileData.rarityDryStreak.getOrDefault(fish.rarity, 0)));
 		}
 
 		if (fish.size == Constant.BABY
@@ -380,8 +382,8 @@ public class FishCatchHandler {
 				fish.size == Constant.GIGANTIC
 						&& config.fishTracker.dryStreakMessageToggles.sizeMessageToggles.showGigantic) {
 
-			sendFishDryStreakMessage(fish.size,
-					ProfileDataHandler.instance().profileData.fishSizeDryStreak.getOrDefault(fish.size, 0));
+			lines.add(buildFishDryStreakLine(fish.size,
+					ProfileDataHandler.instance().profileData.fishSizeDryStreak.getOrDefault(fish.size, 0)));
 		}
 
 		if (fish.variant == Constant.ALBINO
@@ -395,12 +397,17 @@ public class FishCatchHandler {
 				fish.variant == Constant.FABLED
 						&& config.fishTracker.dryStreakMessageToggles.variantMessageToggles.showFabled) {
 
-			sendFishDryStreakMessage(fish.variant,
-					ProfileDataHandler.instance().profileData.variantDryStreak.getOrDefault(fish.variant, 0));
+			lines.add(buildFishDryStreakLine(fish.variant,
+					ProfileDataHandler.instance().profileData.variantDryStreak.getOrDefault(fish.variant, 0)));
 		}
+
+		// Send all of this catch's dry-streak lines as ONE chat message (joined by newlines) so a
+		// copy-message keybind from another mod grabs every line at once, while they still render on
+		// separate lines.
+		sendCombinedDryStreakMessage(lines);
 	}
 
-	private void sendFishDryStreakMessage(Constant fish, int lastCaught) {
+	private Text buildFishDryStreakLine(Constant fish, int lastCaught) {
 		boolean showText = config.fishTracker.dryStreakMessageToggles.showText;
 		TextDisplayHandler.TextDisplay formatting = config.fishTracker.dryStreakMessageToggles.textCapitalization;
 		Text fishText = fish.TAG;
@@ -442,7 +449,7 @@ public class FishCatchHandler {
 			lower = fish.ID.toLowerCase(Locale.ROOT).trim();
 		}
 		useAn = !lower.isEmpty() && "aeiou".indexOf(lower.charAt(0)) >= 0;
-		sendDryStreakMessage(fishText, useAn ? "an " : "a ", lastCaught);
+		return buildDryStreakLine(fishText, useAn ? "an " : "a ", lastCaught);
 	}
 
 	private void sendItemDryStreakMessage(String item, int lastCaught) {
@@ -455,17 +462,42 @@ public class FishCatchHandler {
 	}
 
 	private void sendDryStreakMessage(Text typeText, String article, int lastCaught) {
-		int dryAmount = Math.max(0, ProfileDataHandler.instance().profileData.allFishCaughtCount - lastCaught - 1);
 		var client = MinecraftClient.getInstance();
-
 		if (client.player != null) {
-			client.inGameHud.getChatHud().addMessage(TextHelper.concat(
-					Text.literal("FOE ").formatted(Formatting.DARK_GREEN, Formatting.BOLD),
-					Text.literal("» ").formatted(Formatting.DARK_GRAY),
-					Text.literal("You went ").formatted(Formatting.GRAY),
-					Text.literal(TextHelper.fmnt(dryAmount)).formatted(Formatting.YELLOW),
-					Text.literal(" fish dry before catching " + article).formatted(Formatting.GRAY),
-					typeText));
+			client.inGameHud.getChatHud().addMessage(buildDryStreakLine(typeText, article, lastCaught));
 		}
+	}
+
+	/// Builds one "You went N fish dry before catching a X" dry-streak chat line.
+	private Text buildDryStreakLine(Text typeText, String article, int lastCaught) {
+		int dryAmount = Math.max(0, ProfileDataHandler.instance().profileData.allFishCaughtCount - lastCaught - 1);
+		return TextHelper.concat(
+				Text.literal("FOE ").formatted(Formatting.DARK_GREEN, Formatting.BOLD),
+				Text.literal("» ").formatted(Formatting.DARK_GRAY),
+				Text.literal("You went ").formatted(Formatting.GRAY),
+				Text.literal(TextHelper.fmnt(dryAmount)).formatted(Formatting.YELLOW),
+				Text.literal(" fish dry before catching " + article).formatted(Formatting.GRAY),
+				typeText);
+	}
+
+	/// Sends several dry-streak lines as a single chat message (newline-separated) so another mod's
+	/// copy-message keybind grabs every line at once instead of only the one clicked. Still renders
+	/// on separate lines in chat.
+	private void sendCombinedDryStreakMessage(List<Text> lines) {
+		if (lines.isEmpty()) {
+			return;
+		}
+		var client = MinecraftClient.getInstance();
+		if (client.player == null) {
+			return;
+		}
+		List<Text> parts = new ArrayList<>();
+		for (int i = 0; i < lines.size(); i++) {
+			if (i > 0) {
+				parts.add(Text.literal("\n"));
+			}
+			parts.add(lines.get(i));
+		}
+		client.inGameHud.getChatHud().addMessage(TextHelper.concat(parts.toArray(new Text[0])));
 	}
 }

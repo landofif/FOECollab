@@ -20,8 +20,10 @@ public class FishTrackerHudHandler {
     private static FishTrackerHudHandler INSTANCE = new FishTrackerHudHandler();
 
     // The Fish HUD is the heaviest per-frame text build (dozens of Text allocations + map
-    // lookups). Throttle the rebuild so framerate doesn't drive the allocation rate.
-    private final ThrottledCache<List<Text>> fishTextCache = new ThrottledCache<>(200L, this::buildFishText);
+    // lookups). Throttle the rebuild so framerate doesn't drive the allocation rate. The
+    // HudFont recolor deep-copies every line, so it lives inside the cache too.
+    private final ThrottledCache<List<Text>> fishTextCache =
+            new ThrottledCache<>(200L, () -> HudFont.recolorAll(this.buildFishText()));
 
     public static FishTrackerHudHandler instance() {
         if (INSTANCE == null) {
@@ -129,16 +131,17 @@ public class FishTrackerHudHandler {
         int displayTimerFishCaughtCount = profileData.timerFishCaughtCount;
 
         if (!config.fishTracker.hideTitle && ThemingHandler.instance().currentThemeType == Theming.ThemeType.OFF) {
-            if(config.fishTracker.rightAlignment) {
-                textList.add(TextHelper.concat(
+            // The arrow points at the anchored edge; a centered HUD has none, so no arrow.
+            switch (config.fishTracker.alignment) {
+                case RIGHT -> textList.add(TextHelper.concat(
                         this.getTitle().copy().formatted(Formatting.GRAY),
                         Text.literal(" ◀").formatted(Formatting.GRAY)
                 ));
-            } else {
-                textList.add(TextHelper.concat(
+                case LEFT -> textList.add(TextHelper.concat(
                         Text.literal("▶ ").formatted(Formatting.GRAY),
                         this.getTitle().copy().formatted(Formatting.GRAY)
                 ));
+                case CENTER -> textList.add(this.getTitle().copy().formatted(Formatting.GRAY));
             }
         }
 

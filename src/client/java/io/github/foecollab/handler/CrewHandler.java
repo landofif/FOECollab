@@ -107,10 +107,10 @@ public class CrewHandler {
                 && !Objects.equals(ScoreboardHandler.instance().crewName, "")
                 && minecraftClient.player != null
                 && entity instanceof PlayerEntity crewMember
-                && ProfileDataHandler.instance().profileData.crewMembers.stream().anyMatch(uuid -> uuid.equals(crewMember.getUuid()))
+                && ProfileDataHandler.instance().profileData.crewMembers.contains(crewMember.getUuid())
                 && !crewMember.getUuid().equals(minecraftClient.player.getUuid())
         ) {
-            if (crewMember.getBlockPos().toBottomCenterPos().distanceTo(minecraftClient.player.getBlockPos().toBottomCenterPos()) < 10) {
+            if (crewMember.squaredDistanceTo(minecraftClient.player) < 10 * 10) {
                 isNearby.set(true);
             }
             foundCrew.set(true);

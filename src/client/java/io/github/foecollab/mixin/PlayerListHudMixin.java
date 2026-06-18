@@ -39,7 +39,12 @@ public class PlayerListHudMixin {
             if (!devType.usePurpleTag) {
                 jsonText = jsonText.replace("B05BF9", "00AF0E");
             }
-            text = (MutableText) TextHelper.jsonToText(jsonText);
+            // .copy() (not a raw cast): jsonToText's deserialized Text has an IMMUTABLE siblings
+            // list, so the friend/crew .append(...) below would throw UnsupportedOperationException
+            // (crashes the tab-list render for any dev who is also a friend/crew member, e.g. you in
+            // your own crew). copy() yields a MutableText with a mutable siblings list, like the
+            // non-dev branch.
+            text = TextHelper.jsonToText(jsonText).copy();
         } else {
             text = cir.getReturnValue().copy();
         }
@@ -49,7 +54,7 @@ public class PlayerListHudMixin {
         }
 
         if (config.crewTracker.showCrewTag && LoadingHandler.instance().isOnServer && ProfileDataHandler.instance().profileData.crewMembers.contains(entry.getProfile().id())) {
-            text = config.crewTracker.isPrefix ? Text.literal("").append(text) : text.append(Text.literal("").formatted(Formatting.WHITE));
+            text = config.crewTracker.isPrefix ? Text.literal("").append(text) : text.append(Text.literal(" ").formatted(Formatting.WHITE));
         }
 
         Text result = text;

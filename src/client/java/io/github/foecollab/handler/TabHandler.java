@@ -135,7 +135,7 @@ public class TabHandler {
                         Text displayName = player.getDisplayName();
                         if (displayName != null
                                 && Defaults.foeDevs.containsKey(player.getProfile().id().toString())) {
-                            Defaults.FoEDevType devType = Defaults.foeDevs.get(player.getProfile().id().toString());
+                        Defaults.FoEDevType devType = Defaults.foeDevs.get(player.getProfile().id().toString());
                             if (devType.usePurpleTag) {
                                 displayName = Constant.FOE_PURPLE.TAG.copy()
                                         .append(Text.literal(" " + player.getProfile().name()));

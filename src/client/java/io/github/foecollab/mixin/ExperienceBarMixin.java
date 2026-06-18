@@ -19,7 +19,9 @@ public class ExperienceBarMixin {
 
     @Inject(method = "renderBar", at = @At("HEAD"), cancellable = true)
     private void hideExperienceBar(DrawContext context, RenderTickCounter tickCounter, CallbackInfo ci) {
-        if(config.barHUD.showBar && LoadingHandler.instance().isOnServer) {
+        // Hidden when the FoE top bar replaces it, OR when "hide hearts & hunger" is on — that
+        // toggle also hides the XP bar, even with the top bar off.
+        if((config.barHUD.showBar || config.hideHealthAndHunger) && LoadingHandler.instance().isOnServer) {
             ci.cancel();
         }
     }

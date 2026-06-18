@@ -38,6 +38,9 @@ public class MovableBoxWidget extends ClickableWidget {
 
     private float scale;
     private int fontSize;
+    /// When true the element anchors flush to the screen top/bottom (no top reserve) — used by custom
+    /// HUDs, whose live renderer also uses the flush model so they can be placed at the very top.
+    private boolean topAnchored = false;
     private int anchorOffsetX; // distance from the box's left edge to the anchored point
     private int xMin;
     private int xMax;
@@ -72,6 +75,14 @@ public class MovableBoxWidget extends ClickableWidget {
         recomputeGeometry();
     }
 
+    /// Anchor this element flush to the screen top/bottom (no top reserve), matching a HUD whose live
+    /// renderer uses the flush model (custom HUDs). Recomputes bounds so the box repositions at once.
+    public MovableBoxWidget topAnchored() {
+        this.topAnchored = true;
+        recomputeGeometry();
+        return this;
+    }
+
     /// Recompute the widget's scale, size, drag bounds and (from the stored percentages) its
     /// on-screen position. Called once on construction and again whenever the font size is
     /// scrolled. The anchored point — the box centre for {@link Alignment#CENTER}, otherwise the
@@ -102,8 +113,14 @@ public class MovableBoxWidget extends ClickableWidget {
             this.yMin = topReserved - this.height / 2;
             this.yMax = screenHeight - this.height / 2;
         } else {
-            this.yMin = topReserved;
-            this.yMax = Math.max(topReserved, screenHeight - this.height);
+            // The live HUD pins its box 3*padding below the top (renderHud's heightClampTranslation)
+            // while the top bar is shown, so mirror that — using topReserved as the offset here made
+            // the drag box drift from the real HUD when the font scale isn't 1. When the top bar is
+            // hidden (topReserved == 0) the live HUD switches to the flush model (HudLayout) and can
+            // reach the very top, so drop the reserve here too. topAnchored HUDs (custom HUDs) always
+            // use the flush model, so yMin = 0.
+            this.yMin = (topAnchored || topReserved == 0) ? 0 : Math.round(3 * padding * scale);
+            this.yMax = Math.max(this.yMin, screenHeight - this.height);
         }
 
         this.setX(boxXFromPercent(xPercent, screenWidth));
@@ -112,9 +129,12 @@ public class MovableBoxWidget extends ClickableWidget {
         this.originalY = getY();
     }
 
-    /// Box left edge for the given anchor percentage, clamped to the drag bounds.
+    /// Box left edge for the given anchor percentage, clamped to the drag bounds. The percentage is
+    /// always measured from the screen's left edge for every alignment; the alignment only decides
+    /// which point of the box ({@link #anchorOffsetX}) sits at that x, so switching alignment keeps
+    /// the same x and the box just grows in a different direction rather than jumping across.
     private int boxXFromPercent(int percent, int screenWidth) {
-        float anchorScreenX = (alignment == Alignment.RIGHT ? (100 - percent) : percent) / 100f * screenWidth;
+        float anchorScreenX = percent / 100f * screenWidth;
         return Math.clamp((long) (anchorScreenX - anchorOffsetX), xMin, xMax);
     }
 
@@ -126,12 +146,10 @@ public class MovableBoxWidget extends ClickableWidget {
         return Math.clamp((long) top, yMin, yMax);
     }
 
-    /// Anchor percentage (0-100) for the box's current left edge.
+    /// Anchor percentage (0-100) for the box's current anchored point, measured from the screen's
+    /// left edge for every alignment (see {@link #boxXFromPercent}).
     private int percentXFromBox(int screenWidth) {
         float pct = (getX() + anchorOffsetX) / (float) screenWidth * 100f;
-        if (alignment == Alignment.RIGHT) {
-            pct = 100 - pct;
-        }
         return Math.clamp((long) pct, 0, 100);
     }
 

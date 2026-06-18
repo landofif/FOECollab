@@ -8,7 +8,6 @@ import io.github.foecollab.FOMC.Types.FishingRod;
 import io.github.foecollab.FOMC.Types.Lure;
 import io.github.foecollab.config.FOEConfig;
 import io.github.foecollab.mixin.InGameHudAccessor;
-import io.github.foecollab.util.ItemStackHelper;
 import io.github.foecollab.util.TextHelper;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
@@ -23,7 +22,6 @@ import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.projectile.FishingBobberEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
-import net.minecraft.nbt.NbtCompound;
 import net.minecraft.state.property.BooleanProperty;
 import net.minecraft.state.property.IntProperty;
 import net.minecraft.state.property.Properties;
@@ -99,25 +97,21 @@ public class FishingRodHandler {
         }
 
         if(this.fishingRod != null) {
-            NbtCompound rodNbt = ItemStackHelper.getNbt(this.fishingRodStack);
-            Constant baitWaterType = rodNbt != null ? FishingRod.getFirstBaitWaterType(rodNbt) : null;
-            
-            if(baitWaterType != null && baitWaterType != Constant.ANY_WATER) {
-                Constant locationWater = LocationInfo.valueOfId(BossBarHandler.instance().currentLocation.ID).WATER;
-                this.isWrongBait = baitWaterType != locationWater;
+            Constant locationWater = LocationInfo.valueOfId(BossBarHandler.instance().currentLocation.ID).WATER;
+
+            // The equipped bait/lure now lives in its own activeBait slot, not the tacklebox, so the
+            // wrong-location warning reads from there. Bait sitting unequipped in the tacklebox isn't
+            // what's being fished with, so it shouldn't trigger the warning (mirrors the bait HUD).
+            FOMCItem activeBait = this.fishingRod.getActiveBaitItem();
+            if (activeBait instanceof Bait bait && bait.water != Constant.ANY_WATER) {
+                this.isWrongBait = bait.water != locationWater;
                 this.isWrongLure = false;
-            } else if(this.fishingRod.tacklebox.isEmpty()) {
+            } else if (activeBait instanceof Lure lure && lure.water != Constant.ANY_WATER) {
+                this.isWrongLure = lure.water != locationWater;
+                this.isWrongBait = false;
+            } else {
                 this.isWrongBait = false;
                 this.isWrongLure = false;
-            } else {
-                if(this.fishingRod.tacklebox.getFirst() instanceof Bait bait && bait.water != Constant.ANY_WATER) {
-                    this.isWrongBait = bait.water != LocationInfo.valueOfId(BossBarHandler.instance().currentLocation.ID).WATER;
-                } else if (this.fishingRod.tacklebox.getFirst() instanceof Lure lure && lure.water != Constant.ANY_WATER) {
-                    this.isWrongLure = lure.water != LocationInfo.valueOfId(BossBarHandler.instance().currentLocation.ID).WATER;
-                } else {
-                    this.isWrongBait = false;
-                    this.isWrongLure = false;
-                }
             }
 
             if(this.fishingRod.reel != null && this.fishingRod.reel.water != Constant.GLOBAL_WATER) {

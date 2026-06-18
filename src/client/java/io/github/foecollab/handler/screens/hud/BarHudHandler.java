@@ -3,12 +3,14 @@ package io.github.foecollab.handler.screens.hud;
 import io.github.foecollab.FOMC.Constant;
 import io.github.foecollab.FOMC.LevelColors;
 import io.github.foecollab.FOMC.LocationInfo;
+import io.github.foecollab.common.HudFont;
 import io.github.foecollab.config.FOEConfig;
 import io.github.foecollab.handler.BossBarHandler;
 import io.github.foecollab.handler.ScoreboardHandler;
 import io.github.foecollab.handler.TabHandler;
 import io.github.foecollab.util.LocationNameHelper;
 import io.github.foecollab.util.TextHelper;
+import io.github.foecollab.util.ThrottledCache;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
 
@@ -18,6 +20,14 @@ public class BarHudHandler {
     private static BarHudHandler INSTANCE = new BarHudHandler();
     private final FOEConfig config = FOEConfig.getConfig();
 
+    // The bar is rebuilt from scoreboard/bossbar strings; none of that changes per frame.
+    private final ThrottledCache<Text> leftTextCache =
+            new ThrottledCache<>(200L, () -> HudFont.recolor(this.buildLeftText()));
+    private final ThrottledCache<Text> middleTextCache =
+            new ThrottledCache<>(200L, () -> HudFont.recolor(this.buildMiddleText()));
+    private final ThrottledCache<Text> rightTextCache =
+            new ThrottledCache<>(200L, () -> HudFont.recolor(this.buildRightText()));
+
     public static BarHudHandler instance() {
         if (INSTANCE == null) {
             INSTANCE = new BarHudHandler();
@@ -26,6 +36,18 @@ public class BarHudHandler {
     }
 
     public Text assembleLeftText() {
+        return leftTextCache.get();
+    }
+
+    public Text assembleMiddleText() {
+        return middleTextCache.get();
+    }
+
+    public Text assembleRightText() {
+        return rightTextCache.get();
+    }
+
+    private Text buildLeftText() {
         float repetitions = 100f / 20f;
         float stringRepetitions = (float) Math.floor(ScoreboardHandler.instance().percentLevel * 100);
         float restRepetitions = 100 - stringRepetitions;
@@ -44,7 +66,7 @@ public class BarHudHandler {
         );
     }
 
-    public Text assembleMiddleText() {
+    private Text buildMiddleText() {
         Text weather;
         if(BossBarHandler.instance().weather.contains(Constant.SUN.ID)) {
             weather = Text.literal(BossBarHandler.instance().weather).withColor(Constant.SUN.COLOR);
@@ -106,7 +128,7 @@ public class BarHudHandler {
         );
     }
 
-    public Text assembleRightText() {
+    private Text buildRightText() {
         Text padding = Text.literal("    ");
 
         return TextHelper.concat(

@@ -13,7 +13,6 @@ import java.io.IOException;
 public class PacketHandler {
     private static PacketHandler INSTANCE = new PacketHandler();
 
-    public static final TypingPacket TYPING_PACKET = new TypingPacket();
     public static final ContestPBPacket CONTEST_PB_PACKET = new ContestPBPacket();
 
     public static final int VENDOR_ID = 219;
@@ -30,7 +29,6 @@ public class PacketHandler {
     }
 
     public void addHandlers() {
-        TypingPacket.addHandler();
         ContestPBPacket.addHandler();
     }
 
@@ -121,8 +119,8 @@ public class PacketHandler {
     }
 
     public enum PacketID {
-        START_TYPING_PACKED_ID(0),
-        STOP_TYPING_PACKED_ID(1),
+        // Ids 0/1 belonged to the removed typing-status packets; 2 stays for wire
+        // compatibility with other mod users.
         CONTEST_PB_NOTIFICATION_ID(2);
 
         final int ID;

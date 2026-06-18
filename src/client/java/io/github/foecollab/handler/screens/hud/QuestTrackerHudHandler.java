@@ -18,7 +18,8 @@ import java.util.List;
 public class QuestTrackerHudHandler {
     private static QuestTrackerHudHandler INSTANCE = new QuestTrackerHudHandler();
 
-    private final ThrottledCache<List<Text>> questTextCache = new ThrottledCache<>(200L, this::buildQuestText);
+    private final ThrottledCache<List<Text>> questTextCache =
+            new ThrottledCache<>(200L, () -> HudFont.recolorAll(this.buildQuestText()));
 
     public static QuestTrackerHudHandler instance() {
         if (INSTANCE == null) {
@@ -36,16 +37,17 @@ public class QuestTrackerHudHandler {
         List<Text> textList = new ArrayList<>();
 
         if (!config.questTracker.hideTitle && ThemingHandler.instance().currentThemeType == Theming.ThemeType.OFF) {
-            if(config.questTracker.rightAlignment) {
-                textList.add(TextHelper.concat(
+            // The arrow points at the anchored edge; a centered HUD has none, so no arrow.
+            switch (config.questTracker.alignment) {
+                case RIGHT -> textList.add(TextHelper.concat(
                         this.getTitle().copy().formatted(Formatting.GRAY),
                         Text.literal(" ◀").formatted(Formatting.GRAY)
                 ));
-            } else {
-                textList.add(TextHelper.concat(
+                case LEFT -> textList.add(TextHelper.concat(
                         Text.literal("▶ ").formatted(Formatting.GRAY),
                         this.getTitle().copy().formatted(Formatting.GRAY)
                 ));
+                case CENTER -> textList.add(this.getTitle().copy().formatted(Formatting.GRAY));
             }
         }
 
@@ -54,7 +56,7 @@ public class QuestTrackerHudHandler {
 
             if (!config.questTracker.hideLocation) {
                 textList.add(TextHelper.concat(
-                        Text.literal("ʟᴏᴄ.: ").formatted(Formatting.GRAY),
+                        Text.literal("ʟᴏᴄ: ").formatted(Formatting.GRAY),
                         BossBarHandler.instance().currentLocation == Constant.SPAWNHUB ? Constant.CYPRESS_LAKE.TAG : BossBarHandler.instance().currentLocation.TAG
                 ));
             }

@@ -16,6 +16,7 @@
     "ChatScreenMixin",
     "ClientCommonNetworkHandlerMixin",
     "ClientPlayerInteractionManagerMixin",
+    "ClientWorldMixin",
     "DrawContextMixin",
     "EntityMixin",
     "ExperienceBarMixin",

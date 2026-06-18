@@ -10,7 +10,10 @@ public class TrackerBaitHUDConfig {
         public boolean showLowBaitWarningHUD = true;
         @ConfigEntry.Gui.Tooltip
         public int lowBaitThreshold = 10;
-        public boolean rightAlignment = false;
+        // CENTER keeps the block centred on its anchor; LEFT/RIGHT pin that edge and put the
+        // bait icon on the matching side.
+        @ConfigEntry.Gui.EnumHandler(option = ConfigEntry.Gui.EnumHandler.EnumDisplayOption.BUTTON)
+        public HudAlignment alignment = HudAlignment.CENTER;
         @ConfigEntry.Gui.Tooltip
         public boolean calculateLures = true;
         @ConfigEntry.Gui.Excluded

@@ -46,18 +46,19 @@ public class TagGlyphGen {
 
     static final Tag[] TAGS = new Tag[]{
             // Ranks
-            new Tag(0xF021, "owner", 'O', 0xFFFFFF),
-            new Tag(0xF022, "admin", 'A', 0xFFFFFF),
+            new Tag(0xF021, "owner", 'O', 0xE03C3C),
+            new Tag(0xF022, "admin", 'A', 0xFF4500),
             new Tag(0xF023, "manager", 'M', 0xFFFFFF),
             new Tag(0xF024, "staff", 'S', 0x3D7CE0),
             new Tag(0xF026, "designer", 'D', 0xF15BB5),
-            new Tag(0xF027, "builder", 'B', 0xFFFFFF),
+            new Tag(0xF027, "builder", 'B', 0x2F6BE3),
             new Tag(0xF028, "admiral", 'A', 0xAE5AF6),
             new Tag(0xF029, "captain", 'C', 0xFCA307),
             new Tag(0xF030, "mariner", 'M', 0x66F8AE),
             new Tag(0xF031, "sailor", 'S', 0x96F564),
             new Tag(0xF032, "angler", 'A', 0x20BBD7),
-            new Tag(0xF088, "communitymanager", 'C', 0xFFFFFF),
+            new Tag(0xF066, "media", 'M', 0xC85127),
+            new Tag(0xF088, "communitymanager", 'C', 0x2EB84B),
             // Rarities
             new Tag(0xF033, "common", 'C', 0xFFFFFF),
             new Tag(0xF034, "rare", 'R', 0x2B85C4),

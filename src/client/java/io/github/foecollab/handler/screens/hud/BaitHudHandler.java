@@ -3,9 +3,11 @@ package io.github.foecollab.handler.screens.hud;
 import io.github.foecollab.FOMC.Types.Bait;
 import io.github.foecollab.FOMC.Types.FOMCItem;
 import io.github.foecollab.FOMC.Types.Lure;
+import io.github.foecollab.common.HudFont;
 import io.github.foecollab.config.FOEConfig;
 import io.github.foecollab.handler.FishingRodHandler;
 import io.github.foecollab.util.TextHelper;
+import io.github.foecollab.util.ThrottledCache;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.component.type.CustomModelDataComponent;
 import net.minecraft.text.Text;
@@ -13,6 +15,9 @@ import net.minecraft.util.Formatting;
 
 public class BaitHudHandler {
     private static BaitHudHandler INSTANCE = new BaitHudHandler();
+
+    private final ThrottledCache<Text> baitTextCache =
+            new ThrottledCache<>(200L, () -> HudFont.recolor(this.buildBaitText()));
 
     public static BaitHudHandler instance() {
         if (INSTANCE == null) {
@@ -22,6 +27,10 @@ public class BaitHudHandler {
     }
 
     public Text assembleBaitText() {
+        return baitTextCache.get();
+    }
+
+    private Text buildBaitText() {
         if (FishingRodHandler.instance().isTackleboxDisabled(MinecraftClient.getInstance())) {
             return Text.literal("");
         }

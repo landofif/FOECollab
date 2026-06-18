@@ -3,6 +3,7 @@ package io.github.foecollab.handler.screens.hud;
 import io.github.foecollab.FOMC.Constant;
 import io.github.foecollab.FOMC.LocationInfo;
 import io.github.foecollab.FOMC.Types.Bait;
+import io.github.foecollab.FOMC.Types.FOMCItem;
 import io.github.foecollab.FOMC.Types.Lure;
 import io.github.foecollab.common.Theming;
 import io.github.foecollab.config.FOEConfig;
@@ -110,16 +111,19 @@ public class NotificationHudHandler {
                 ));
             }
 
-            // Wrong Bait Warning
+            // Wrong Bait Warning — keyed off the equipped activeBait slot (see FishingRodHandler),
+            // not the tacklebox, so it names the bait/lure actually in use.
+            FOMCItem activeBaitWarning = FishingRodHandler.instance().fishingRod != null
+                    ? FishingRodHandler.instance().fishingRod.getActiveBaitItem()
+                    : null;
             if(config.baitTracker.showBaitWarningHUD
                     && !FishingRodHandler.instance().isTackleboxDisabled(MinecraftClient.getInstance())
                     && (FishingRodHandler.instance().isWrongBait || FishingRodHandler.instance().isWrongLure)
-                    && FishingRodHandler.instance().fishingRod != null
-                    && !FishingRodHandler.instance().fishingRod.tacklebox.isEmpty()
+                    && activeBaitWarning != null
                     && BossBarHandler.instance().currentLocation != Constant.CREW_ISLAND
                     && BossBarHandler.instance().currentLocation != Constant.SPAWNHUB
             ) {
-                if(FishingRodHandler.instance().fishingRod.tacklebox.getFirst() instanceof Bait bait) {
+                if(activeBaitWarning instanceof Bait bait) {
                     textList.add(Text.empty());
                     textList.add(TextHelper.concat(
                             Text.literal("Your ").formatted(Formatting.RED),
@@ -129,7 +133,7 @@ public class NotificationHudHandler {
                             Text.literal(" here").formatted(Formatting.RED),
                             Text.literal(".").formatted(Formatting.RED)
                     ));
-                } else if(FishingRodHandler.instance().fishingRod.tacklebox.getFirst() instanceof Lure lure) {
+                } else if(activeBaitWarning instanceof Lure lure) {
                     textList.add(Text.empty());
                     textList.add(TextHelper.concat(
                             Text.literal("Your ").formatted(Formatting.RED),

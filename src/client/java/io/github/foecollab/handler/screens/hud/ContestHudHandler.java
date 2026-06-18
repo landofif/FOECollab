@@ -2,6 +2,7 @@ package io.github.foecollab.handler.screens.hud;
 
 import io.github.foecollab.FOMC.Constant;
 import io.github.foecollab.FOMC.LevelColors;
+import io.github.foecollab.common.HudFont;
 import io.github.foecollab.config.FOEConfig;
 import io.github.foecollab.config.TrackerContestHUDConfig;
 import io.github.foecollab.handler.BossBarHandler;
@@ -21,7 +22,8 @@ import java.util.concurrent.TimeUnit;
 public class ContestHudHandler {
     private static ContestHudHandler INSTANCE = new ContestHudHandler();
 
-    private final ThrottledCache<List<Text>> contestTextCache = new ThrottledCache<>(200L, this::buildContestText);
+    private final ThrottledCache<List<Text>> contestTextCache =
+            new ThrottledCache<>(200L, () -> HudFont.recolorAll(this.buildContestText()));
 
     public static ContestHudHandler instance() {
         if (INSTANCE == null) {

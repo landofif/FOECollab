@@ -5,6 +5,7 @@ import io.github.foecollab.config.ConfigConstants;
 import io.github.foecollab.config.FOEConfig;
 import io.github.foecollab.handler.BossBarHandler;
 import io.github.foecollab.handler.LoadingHandler;
+import io.github.foecollab.handler.LookTickHandler;
 import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElement;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
@@ -22,9 +23,12 @@ public class MainHudRenderer implements HudElement {
     final BiteTitleHud biteTitleHud = new BiteTitleHud();
     final BobberTimerHud bobberTimerHud = new BobberTimerHud();
     final ItemFrameTooltipHud itemFrameTooltipHud = new ItemFrameTooltipHud();
+    final CustomHudRenderer customHudRenderer = new CustomHudRenderer();
     final BarHud barHud = new BarHud();
+    final LevelHud levelHud = new LevelHud();
     final ContestHud contestHud = new ContestHud();
     final BaitHud baitHud = new BaitHud();
+    final ChummerHud chummerHud = new ChummerHud();
     final EquipmentHud equipmentHud = new EquipmentHud();
     final CrewHud crewHud = new CrewHud();
     final QuestHud questHud = new QuestHud();
@@ -54,8 +58,14 @@ public class MainHudRenderer implements HudElement {
                     this.itemFrameTooltipHud.render(drawContext, MinecraftClient.getInstance());
                 }
 
+                if(config.customHuds) {
+                    this.customHudRenderer.render(drawContext, MinecraftClient.getInstance());
+                }
+
                 if(config.barHUD.showBar) {
                     this.barHud.render(drawContext, MinecraftClient.getInstance());
+                } else if(config.barHUD.levelHud.showWhenBarHidden) {
+                    this.levelHud.render(drawContext, MinecraftClient.getInstance());
                 }
 
                 if(BossBarHandler.instance().currentLocation != Constant.CREW_ISLAND) {
@@ -76,6 +86,10 @@ public class MainHudRenderer implements HudElement {
                         this.baitHud.render(drawContext, MinecraftClient.getInstance());
                     }
 
+                    if(config.chummerTracker.showChummerHud) {
+                        this.chummerHud.render(drawContext, MinecraftClient.getInstance());
+                    }
+
                     if(config.equipmentTracker.showEquipmentHud) {
                         this.equipmentHud.render(drawContext, MinecraftClient.getInstance());
                     }
@@ -91,6 +105,16 @@ public class MainHudRenderer implements HudElement {
                     if(config.dailyQuestTracker.showDailyQuestHud) {
                         this.dailyQuestHud.render(drawContext, MinecraftClient.getInstance());
                     }
+                }
+
+                // The item-frame tooltip is queued onto the DrawContext's deferred tooltipDrawer,
+                // which is normally only flushed by Screen.renderWithTooltip (drawDeferredElements).
+                // During normal play no screen flushes it, so it only appeared with chat/inventory
+                // open. Flush here — after every HUD so the tooltip layers on top — so it shows
+                // whenever you hover an item frame.
+                if(config.itemFrameTooltip.showTooltip
+                        && LookTickHandler.instance().targetedItemInItemFrame != null) {
+                    drawContext.drawDeferredElements();
                 }
             }
 

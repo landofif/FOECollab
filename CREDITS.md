@@ -26,6 +26,13 @@ changed:
   the modern "box" button look. The button-box textures
   (`assets/foecollab/textures/gui/sprites/elements/box*_atlas.png`) are FOE-R's art assets,
   included here under GPL-3.0.
+- **Armor crafter tooltip** — show who crafted/identified an armor piece while holding the
+  extra-info keybind.
+- **Custom HUDs ("custom codes")** — the user-creatable HUD system: the placeholder/function
+  expression language (`%player.x%`, `%condition.(...)%`, `%substring_back.(...)%`, the math/string/
+  boolean functions and the data-source placeholders) ported from FOE-R's `PlaceholderHandler` /
+  `FunctionParser` / `CustomHud*`, plus a HUD maker/editor screen. Rewritten for FOECollab's data
+  sources and rendered in FoE's own HUD style.
 
 ## Licensing of the combination
 

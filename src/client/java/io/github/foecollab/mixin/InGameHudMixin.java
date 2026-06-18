@@ -81,7 +81,9 @@ public class InGameHudMixin {
     // level number is drawn by the static Bar#drawExperienceLevel call inside renderMainHud.
     @Redirect(method = "renderMainHud", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/hud/bar/Bar;drawExperienceLevel(Lnet/minecraft/client/gui/DrawContext;Lnet/minecraft/client/font/TextRenderer;I)V"))
     private void redirectExperienceLevel(DrawContext context, TextRenderer textRenderer, int level) {
-        if(config.barHUD.showBar && LoadingHandler.instance().isOnServer) {
+        // Hidden when the FoE top bar replaces it, OR when "hide hearts & hunger" is on (that toggle
+        // hides the XP bar + level number too, even with the top bar off).
+        if((config.barHUD.showBar || config.hideHealthAndHunger) && LoadingHandler.instance().isOnServer) {
             return;
         }
         Bar.drawExperienceLevel(context, textRenderer, level);
@@ -165,6 +167,15 @@ public class InGameHudMixin {
     @Inject(method = "renderAirBubbles", at = @At("HEAD"), cancellable = true)
     private void injectRenderAirBubbles(DrawContext context, PlayerEntity player, int heartCount, int top, int left, CallbackInfo ci) {
         if(config.hideHealthAndHunger && LoadingHandler.instance().isOnServer) {
+            ci.cancel();
+        }
+    }
+
+    // renderArmor is static in InGameHud, so this handler must be static too (and can't read the
+    // instance `config` field — fetch the config directly). Same "hide hearts & hunger" toggle.
+    @Inject(method = "renderArmor", at = @At("HEAD"), cancellable = true)
+    private static void injectRenderArmor(DrawContext context, PlayerEntity player, int x, int y, int lines, int regeneratingHeartIndex, CallbackInfo ci) {
+        if(FOEConfig.getConfig().hideHealthAndHunger && LoadingHandler.instance().isOnServer) {
             ci.cancel();
         }
     }

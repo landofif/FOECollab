@@ -47,10 +47,11 @@ public class NotificationHud {
                 boolean center = alignment == HudAlignment.CENTER;
                 boolean left = alignment == HudAlignment.LEFT;
 
-                // Convert percentage config values to screen coordinates. For right alignment the
-                // anchor is measured from the right edge so hudX stays "distance from that edge".
+                // hudX is the anchor's position from the screen's left edge for every alignment;
+                // alignment only picks which point of the box (left edge / centre / right edge) sits
+                // there, so changing alignment keeps the HUD in place instead of jumping.
                 float yFraction = config.notifications.hudY / 100f;
-                float xPercent = alignment == HudAlignment.RIGHT ? 1f - (config.notifications.hudX / 100f) : config.notifications.hudX / 100f;
+                float xPercent = config.notifications.hudX / 100f;
 
                 // Calculate base positions relative to screen size
                 int baseX = (int) (screenWidth * xPercent);
@@ -72,8 +73,7 @@ public class NotificationHud {
                 AtomicInteger count = new AtomicInteger(0);
 
                 int maxLength = textList.stream().map(textRenderer::getWidth).max(Integer::compareTo).orElse(0);
-                int heightClampTranslation = (int) ((padding * 2 + textList.size() * lineHeight) * yFraction);
-                heightClampTranslation -= (int) ((padding * 3) * (1 - yFraction));
+                int heightClampTranslation = HudLayout.heightClampTranslation(padding, padding * 2 + textList.size() * lineHeight, yFraction);
 
                 // Layout anchors. scaledX is the box center (CENTER), left edge (LEFT) or right edge (RIGHT).
                 int contentLeft;

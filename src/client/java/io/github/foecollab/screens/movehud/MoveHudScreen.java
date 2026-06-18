@@ -1,8 +1,12 @@
 package io.github.foecollab.screens.movehud;
 
 import io.github.foecollab.config.FOEConfig;
+import io.github.foecollab.config.HudAlignment;
+import io.github.foecollab.handler.CustomHudHandler;
+import io.github.foecollab.handler.CustomHudHandler.CustomHud;
 import io.github.foecollab.handler.TitleHandler;
 import io.github.foecollab.handler.screens.hud.*;
+import io.github.foecollab.screens.hud.CustomHudRenderer;
 import io.github.foecollab.screens.widget.movablebox.MovableBoxWidget;
 import io.github.foecollab.util.TextHelper;
 import me.shedaniel.autoconfig.AutoConfig;
@@ -30,6 +34,15 @@ public class MoveHudScreen extends Screen {
         this.renderWidgets();
     }
 
+    /// Maps a HUD's configured alignment onto the drag box's anchor mode.
+    private static MovableBoxWidget.Alignment boxAlignment(HudAlignment alignment) {
+        return switch (alignment) {
+            case LEFT -> MovableBoxWidget.Alignment.LEFT;
+            case RIGHT -> MovableBoxWidget.Alignment.RIGHT;
+            case CENTER -> MovableBoxWidget.Alignment.CENTER;
+        };
+    }
+
     private void renderWidgets() {
         List<MovableBoxWidget> movableBoxWidgetList = new ArrayList<>();
 
@@ -45,7 +58,7 @@ public class MoveHudScreen extends Screen {
             List<Text> fishTrackerTextList = FishTrackerHudHandler.instance().assembleFishText();
             int fishTrackerX = config.fishTracker.hudX;
             int fishTrackerY = config.fishTracker.hudY;
-            MovableBoxWidget.Alignment fishTrackerAlignment = config.fishTracker.rightAlignment ? MovableBoxWidget.Alignment.RIGHT : MovableBoxWidget.Alignment.LEFT;
+            MovableBoxWidget.Alignment fishTrackerAlignment = boxAlignment(config.fishTracker.alignment);
             int fishTrackerFontSize = config.fishTracker.fontSize;
             int fishTrackerMaxLength = fishTrackerTextList.stream().map(textRenderer::getWidth).max(Integer::compareTo).orElse(0);
             movableBoxWidgetList.add(new MovableBoxWidget(textRenderer, fishTrackerX, fishTrackerY, fishTrackerAlignment, Text.literal("Fish Tracker"), fishTrackerFontSize, 2, 20, fishTrackerTextList.size(), fishTrackerMaxLength, topReserved, 1f, (xPercent, yPercent) -> {
@@ -63,7 +76,7 @@ public class MoveHudScreen extends Screen {
             List<Text> contestTrackerTextList = ContestHudHandler.instance().assembleContestText();
             int contestTrackerX = config.contestTracker.hudX;
             int contestTrackerY = config.contestTracker.hudY;
-            MovableBoxWidget.Alignment contestTrackerAlignment = config.contestTracker.rightAlignment ? MovableBoxWidget.Alignment.RIGHT : MovableBoxWidget.Alignment.LEFT;
+            MovableBoxWidget.Alignment contestTrackerAlignment = boxAlignment(config.contestTracker.alignment);
             int contestTrackerFontSize = config.contestTracker.fontSize;
             int contestTrackerMaxLength = contestTrackerTextList.stream().map(textRenderer::getWidth).max(Integer::compareTo).orElse(0);
             movableBoxWidgetList.add(new MovableBoxWidget(textRenderer, contestTrackerX, contestTrackerY, contestTrackerAlignment, Text.literal("Contest Tracker"), contestTrackerFontSize, 2, 20, contestTrackerTextList.size(), contestTrackerMaxLength, topReserved, 1f, (xPercent, yPercent) -> {
@@ -81,7 +94,7 @@ public class MoveHudScreen extends Screen {
             List<Text> petTrackerTextList = PetEquipHudHandler.instance().assemblePetText();
             int petTrackerX = config.petEquipTracker.activePetHUDOptions.hudX;
             int petTrackerY = config.petEquipTracker.activePetHUDOptions.hudY;
-            MovableBoxWidget.Alignment petTrackerAlignment = config.petEquipTracker.activePetHUDOptions.rightAlignment ? MovableBoxWidget.Alignment.RIGHT : MovableBoxWidget.Alignment.LEFT;
+            MovableBoxWidget.Alignment petTrackerAlignment = boxAlignment(config.petEquipTracker.activePetHUDOptions.alignment);
             int petTrackerFontSize = config.petEquipTracker.activePetHUDOptions.fontSize;
             int petTrackerMaxLength = petTrackerTextList.stream().map(textRenderer::getWidth).max(Integer::compareTo).orElse(0);
             movableBoxWidgetList.add(new MovableBoxWidget(textRenderer, petTrackerX, petTrackerY, petTrackerAlignment, Text.literal("Pet Tracker"), petTrackerFontSize, 1, 20, petTrackerTextList.size(), petTrackerMaxLength + 16 + 8, topReserved, 1f, (xPercent, yPercent) -> {
@@ -99,7 +112,7 @@ public class MoveHudScreen extends Screen {
             List<Text> questTrackerTextList = QuestTrackerHudHandler.instance().assembleQuestText();
             int questTrackerX = config.questTracker.hudX;
             int questTrackerY = config.questTracker.hudY;
-            MovableBoxWidget.Alignment questTrackerAlignment = config.questTracker.rightAlignment ? MovableBoxWidget.Alignment.RIGHT : MovableBoxWidget.Alignment.LEFT;
+            MovableBoxWidget.Alignment questTrackerAlignment = boxAlignment(config.questTracker.alignment);
             int questTrackerFontSize = config.questTracker.fontSize;
             int questTrackerMaxLength = questTrackerTextList.stream().map(textRenderer::getWidth).max(Integer::compareTo).orElse(0);
             movableBoxWidgetList.add(new MovableBoxWidget(textRenderer, questTrackerX, questTrackerY, questTrackerAlignment, Text.literal("Quest Tracker"), questTrackerFontSize, 2, 20, questTrackerTextList.size(), questTrackerMaxLength, topReserved, 1f, (xPercent, yPercent) -> {
@@ -117,7 +130,7 @@ public class MoveHudScreen extends Screen {
             List<Text> dailyQuestTrackerTextList = DailyQuestTrackerHudHandler.instance().assembleQuestText();
             int dailyQuestTrackerX = config.dailyQuestTracker.hudX;
             int dailyQuestTrackerY = config.dailyQuestTracker.hudY;
-            MovableBoxWidget.Alignment dailyQuestTrackerAlignment = config.dailyQuestTracker.rightAlignment ? MovableBoxWidget.Alignment.RIGHT : MovableBoxWidget.Alignment.LEFT;
+            MovableBoxWidget.Alignment dailyQuestTrackerAlignment = boxAlignment(config.dailyQuestTracker.alignment);
             int dailyQuestTrackerFontSize = config.dailyQuestTracker.fontSize;
             int dailyQuestTrackerMaxLength = dailyQuestTrackerTextList.stream().map(textRenderer::getWidth).max(Integer::compareTo).orElse(0);
             movableBoxWidgetList.add(new MovableBoxWidget(textRenderer, dailyQuestTrackerX, dailyQuestTrackerY, dailyQuestTrackerAlignment, Text.literal("Daily Quest Tracker"), dailyQuestTrackerFontSize, 2, 20, dailyQuestTrackerTextList.size(), dailyQuestTrackerMaxLength, topReserved, 1f, (xPercent, yPercent) -> {
@@ -137,12 +150,30 @@ public class MoveHudScreen extends Screen {
             int baitY = config.baitTracker.hudY;
             int baitFontSize = config.baitTracker.fontSize;
             int baitMaxLength = textRenderer.getWidth(baitText) + 16 + 8;
-            movableBoxWidgetList.add(new MovableBoxWidget(textRenderer, baitX, baitY, MovableBoxWidget.Alignment.CENTER, Text.literal("Bait"), baitFontSize, 1, 20, 1, baitMaxLength, topReserved, 1f, (xPercent, yPercent) -> {
+            movableBoxWidgetList.add(new MovableBoxWidget(textRenderer, baitX, baitY, boxAlignment(config.baitTracker.alignment), Text.literal("Bait"), baitFontSize, 1, 20, 1, baitMaxLength, topReserved, 1f, (xPercent, yPercent) -> {
                 config.baitTracker.hudX = xPercent;
                 config.baitTracker.hudY = yPercent;
                 AutoConfig.getConfigHolder(FOEConfig.class).save();
             }, fontSize -> {
                 config.baitTracker.fontSize = fontSize;
+                AutoConfig.getConfigHolder(FOEConfig.class).save();
+            }));
+        }
+
+        // Chummer HUD (icon + two text lines + time bar; only shows in-game while a chummer is
+        // active, so the editor uses a representative sample for sizing)
+        if (config.chummerTracker.showChummerHud) {
+            int chummerX = config.chummerTracker.hudX;
+            int chummerY = config.chummerTracker.hudY;
+            int chummerFontSize = config.chummerTracker.fontSize;
+            Text chummerLabel = Text.literal("Chummer");
+            int chummerMaxLength = Math.max(textRenderer.getWidth(chummerLabel), textRenderer.getWidth(Text.literal("ᴄʜᴜᴍᴍᴇʀ"))) + 16 + 4;
+            movableBoxWidgetList.add(new MovableBoxWidget(textRenderer, chummerX, chummerY, boxAlignment(config.chummerTracker.alignment), chummerLabel, chummerFontSize, 2, 20, 2, chummerMaxLength, topReserved, 1f, (xPercent, yPercent) -> {
+                config.chummerTracker.hudX = xPercent;
+                config.chummerTracker.hudY = yPercent;
+                AutoConfig.getConfigHolder(FOEConfig.class).save();
+            }, fontSize -> {
+                config.chummerTracker.fontSize = fontSize;
                 AutoConfig.getConfigHolder(FOEConfig.class).save();
             }));
         }
@@ -219,7 +250,7 @@ public class MoveHudScreen extends Screen {
             int bobberTimerFontSize = config.bobberTracker.timerHudFontSize;
             Text bobberTimerLabel = Text.literal("Bobber Timer");
             int bobberTimerMaxLength = textRenderer.getWidth(bobberTimerLabel);
-            movableBoxWidgetList.add(new MovableBoxWidget(textRenderer, bobberTimerX, bobberTimerY, MovableBoxWidget.Alignment.CENTER, bobberTimerLabel, bobberTimerFontSize, 1, 40, 1, bobberTimerMaxLength, topReserved, 1f, (xPercent, yPercent) -> {
+            movableBoxWidgetList.add(new MovableBoxWidget(textRenderer, bobberTimerX, bobberTimerY, boxAlignment(config.bobberTracker.timerHudAlignment), bobberTimerLabel, bobberTimerFontSize, 1, 40, 1, bobberTimerMaxLength, topReserved, 1f, (xPercent, yPercent) -> {
                 config.bobberTracker.timerHudX = xPercent;
                 config.bobberTracker.timerHudY = yPercent;
                 AutoConfig.getConfigHolder(FOEConfig.class).save();
@@ -227,6 +258,49 @@ public class MoveHudScreen extends Screen {
                 config.bobberTracker.timerHudFontSize = fontSize;
                 AutoConfig.getConfigHolder(FOEConfig.class).save();
             }));
+        }
+
+        // Level + XP HUD — only shown (and movable) while the top bar is hidden.
+        if (!config.barHUD.showBar && config.barHUD.levelHud.showWhenBarHidden) {
+            List<Text> levelTextList = LevelHudHandler.instance().assembleText();
+            int levelX = config.barHUD.levelHud.hudX;
+            int levelY = config.barHUD.levelHud.hudY;
+            int levelFontSize = config.barHUD.levelHud.fontSize;
+            int levelMaxLength = levelTextList.stream().map(textRenderer::getWidth).max(Integer::compareTo).orElse(0);
+            movableBoxWidgetList.add(new MovableBoxWidget(textRenderer, levelX, levelY, boxAlignment(config.barHUD.levelHud.alignment), Text.literal("Level"), levelFontSize, 2, 20, levelTextList.size(), levelMaxLength, topReserved, 1f, (xPercent, yPercent) -> {
+                config.barHUD.levelHud.hudX = xPercent;
+                config.barHUD.levelHud.hudY = yPercent;
+                AutoConfig.getConfigHolder(FOEConfig.class).save();
+            }, fontSize -> {
+                config.barHUD.levelHud.fontSize = fontSize;
+                AutoConfig.getConfigHolder(FOEConfig.class).save();
+            }));
+        }
+
+        // Custom HUDs (user-made / imported). Each enabled one gets its own drag box, sized from its
+        // resolved lines exactly like the live renderer; a HUD with no current data falls back to its
+        // name so it stays grabbable. Position/scale persist to the custom-HUD file, not the config.
+        if (config.customHuds) {
+            for (CustomHud hud : CustomHudHandler.instance().getHuds()) {
+                if (!hud.enabled) {
+                    continue;
+                }
+                List<Text> customLines = CustomHudRenderer.resolveHudLines(hud);
+                Text customLabel = Text.literal(hud.name == null || hud.name.isBlank() ? "Custom HUD" : hud.name);
+                int customLineCount = customLines.isEmpty() ? 1 : customLines.size();
+                int customMaxLength = customLines.isEmpty()
+                        ? textRenderer.getWidth(customLabel)
+                        : customLines.stream().map(textRenderer::getWidth).max(Integer::compareTo).orElse(0);
+                MovableBoxWidget.Alignment customAlignment = boxAlignment(hud.alignment == null ? HudAlignment.LEFT : hud.alignment);
+                movableBoxWidgetList.add(new MovableBoxWidget(textRenderer, hud.hudX, hud.hudY, customAlignment, customLabel, hud.fontSize, 2, 20, customLineCount, customMaxLength, topReserved, 1f, (xPercent, yPercent) -> {
+                    hud.hudX = xPercent;
+                    hud.hudY = yPercent;
+                    CustomHudHandler.instance().save();
+                }, fontSize -> {
+                    hud.fontSize = fontSize;
+                    CustomHudHandler.instance().save();
+                }).topAnchored());
+            }
         }
 
         movableBoxWidgetList.forEach(this::addDrawableChild);

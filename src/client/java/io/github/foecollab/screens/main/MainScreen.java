@@ -3,6 +3,7 @@ package io.github.foecollab.screens.main;
 import io.github.foecollab.config.ConfigConstants;
 import io.github.foecollab.config.FOEConfig;
 import io.github.foecollab.handler.TabHandler;
+import io.github.foecollab.screens.CustomHudMakerScreen;
 import io.github.foecollab.screens.debug.DebugScreen;
 import io.github.foecollab.screens.movehud.MoveHudScreen;
 import io.github.foecollab.screens.widget.IconButtonWidget;
@@ -63,6 +64,12 @@ public class MainScreen extends Screen {
         widgets.add(IconButtonWidget.builder(Text.literal("Move HUD Elements"), button -> minecraftClient.setScreen(new MoveHudScreen(minecraftClient, minecraftClient.currentScreen)))
                 .position(width / 2 + 4, height / 2 + 4)
                 .itemIcon(Items.STRUCTURE_VOID.getDefaultStack())
+                .width(130)
+                .build());
+
+        widgets.add(IconButtonWidget.builder(Text.literal("Custom HUDs"), button -> minecraftClient.setScreen(new CustomHudMakerScreen(minecraftClient.currentScreen)))
+                .position(width / 2 + 4, height / 2 + 36)
+                .itemIcon(Items.OAK_SIGN.getDefaultStack())
                 .width(130)
                 .build());
 

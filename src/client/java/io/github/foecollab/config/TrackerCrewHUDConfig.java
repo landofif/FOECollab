@@ -16,6 +16,6 @@ public class TrackerCrewHUDConfig {
         public boolean notifyCrewOnLeave = true;
         public boolean showCrewTag = true;
         @ConfigEntry.Gui.Tooltip
-        public boolean isPrefix = true;
+        public boolean isPrefix = false;
     }
 }

@@ -1,7 +1,7 @@
 package io.github.foecollab.screens.hud;
 
-import io.github.foecollab.common.HudFont;
 import io.github.foecollab.config.FOEConfig;
+import io.github.foecollab.config.HudAlignment;
 import io.github.foecollab.handler.screens.hud.BaitHudHandler;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.TextRenderer;
@@ -20,7 +20,7 @@ public class BaitHud {
         TextRenderer textRenderer = client.textRenderer;
 
         // Assemble all text lines
-        Text baitText = HudFont.recolor(BaitHudHandler.instance().assembleBaitText());
+        Text baitText = BaitHudHandler.instance().assembleBaitText();
         CustomModelDataComponent modelData = BaitHudHandler.instance().getModelData();
         ItemStack baitStack = Items.COOKED_COD.getDefaultStack().copy();
         baitStack.set(DataComponentTypes.CUSTOM_MODEL_DATA, modelData);
@@ -32,14 +32,15 @@ public class BaitHud {
                 int screenWidth = client.getWindow().getScaledWidth();
                 int screenHeight = client.getWindow().getScaledHeight();
 
-                boolean rightAlignment = config.baitTracker.rightAlignment;
+                HudAlignment alignment = config.baitTracker.alignment;
 
-                // Convert percentage config values to screen coordinates (hudX/hudY are the
-                // centre of the bait display, matching the HUD editor's centred drag box).
+                // hudX is the anchor's position from the screen's left edge for every alignment;
+                // CENTER puts the bait display's centre there, LEFT/RIGHT pin that edge of the block
+                // (and the icon side). Changing alignment keeps it in place instead of jumping.
                 float xPercent = config.baitTracker.hudX / 100f;
                 float yPercent = config.baitTracker.hudY / 100f;
 
-                // Calculate centre position relative to screen size
+                // Calculate anchor position relative to screen size
                 int baseX = (int) (screenWidth * xPercent);
                 int baseY = (int) (screenHeight * yPercent);
 
@@ -56,21 +57,27 @@ public class BaitHud {
                 int blockWidth = padding * 2 + 4 + 16 + maxLength;
                 int blockHeight = 24;
 
-                // Centre the block on (baseX, baseY) in scaled space, clamped on-screen.
-                int scaledCenterX = (int) (baseX / scale);
-                int scaledCenterY = (int) (baseY / scale);
+                // Anchor the block in scaled space, clamped on-screen.
+                int scaledAnchorX = (int) (baseX / scale);
+                int scaledAnchorY = (int) (baseY / scale);
                 int scaledScreenWidth = (int) (screenWidth / scale);
                 int scaledScreenHeight = (int) (screenHeight / scale);
-                int left = (int) Math.clamp((long) (scaledCenterX - blockWidth / 2), 0, Math.max(0, scaledScreenWidth - blockWidth));
-                int top = (int) Math.clamp((long) (scaledCenterY - blockHeight / 2), 0, Math.max(0, scaledScreenHeight - blockHeight));
+                int unclampedLeft = switch (alignment) {
+                    case CENTER -> scaledAnchorX - blockWidth / 2;
+                    case LEFT -> scaledAnchorX;
+                    case RIGHT -> scaledAnchorX - blockWidth;
+                };
+                int unclampedTop = alignment == HudAlignment.CENTER ? scaledAnchorY - blockHeight / 2 : scaledAnchorY;
+                int left = (int) Math.clamp((long) unclampedLeft, 0, Math.max(0, scaledScreenWidth - blockWidth));
+                int top = (int) Math.clamp((long) unclampedTop, 0, Math.max(0, scaledScreenHeight - blockHeight));
                 int right = left + blockWidth;
 
                 // Draw Background
                 drawContext.fill(left, top, right, top + blockHeight, alphaInt);
 
-                // Draw item border, icon and text. rightAlignment puts the icon on the left
+                // Draw item border, icon and text. LEFT alignment puts the icon on the left
                 // (icon then text), otherwise the icon sits on the right (text then icon).
-                if(rightAlignment) {
+                if(alignment == HudAlignment.LEFT) {
                     drawContext.drawStrokedRectangle(left + 2, top + 2, 20, 20, alphaInt | 0xFFFFFF);
                     drawContext.drawItem(baitStack, left + 4, top + 4);
                     drawContext.drawText(textRenderer, baitText, left + padding + 4 + 16, top + 12 - fontSize / 2, 0xFFFFFFFF, true);

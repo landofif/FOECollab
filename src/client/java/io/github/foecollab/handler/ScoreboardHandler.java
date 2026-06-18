@@ -30,6 +30,7 @@ public class ScoreboardHandler {
     public boolean noScoreBoard = false;
 
     private List<Text> prevList = new ArrayList<>();
+    private int tickCounter = 0;
 
     public static ScoreboardHandler instance() {
         if (INSTANCE == null) {
@@ -39,6 +40,12 @@ public class ScoreboardHandler {
     }
 
     public void tick(MinecraftClient client) {
+        // Reading the sidebar means a getString tree walk over every team's prefix, and a
+        // crowded server has a team per player. The sidebar only carries slow-changing
+        // metadata (location, crew, level), so 2 Hz is plenty.
+        if (this.tickCounter++ % 10 != 0) {
+            return;
+        }
         try {
             List<Text> textList = new ArrayList<>();
 
