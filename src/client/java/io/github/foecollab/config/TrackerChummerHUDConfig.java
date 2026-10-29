@@ -5,6 +5,8 @@ import me.shedaniel.autoconfig.annotation.ConfigEntry;
 public class TrackerChummerHUDConfig {
     public static class ChummerTracker {
         public boolean showChummerHud = true;
+        // The time bar under the hud's text, draining as the chummer runs out.
+        public boolean showProgressBar = true;
         // Replaces the server's particle circle with a solid ring at the chummer's range (20 blocks).
         public boolean solidRangeBar = true;
         @ConfigEntry.ColorPicker
